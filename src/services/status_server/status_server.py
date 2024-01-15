@@ -5,7 +5,7 @@ app = Flask(__name__)
 api = Api(app, version='1.0', title='My API', description='A simple API')
 
 # Define a namespace
-ns = api.namespace('main', description='Main operations')
+ns = api.namespace('api', description='Main operations')
 
 
 # Define resource classes

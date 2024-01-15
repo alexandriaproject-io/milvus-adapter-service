@@ -1,13 +1,19 @@
 from multiprocessing import Process, Manager
-from src.services.status_server import status_server
-
+from src.com_services import run_com_services
+import sys
+import signal
 
 if __name__ == '__main__':
-    manager = Manager()
-    shared_stats = manager.dict()
+    try:
+        manager = Manager()
+        shared_stats = manager.dict()
 
-    status_server = Process(target=status_server.run_flask_app, args=(shared_stats,))
-    status_server.start()
-
-    status_server.join()
-    print("Starting status server")
+        com_server = Process(target=run_com_services, args=(shared_stats,), daemon=True)
+        com_server.start()
+        com_server.join()
+    except KeyboardInterrupt:
+        print("Interrupt received, shutting down...")
+        com_server.terminate()  # Terminate the subprocess
+        com_server.join()  # Wait for the subprocess to terminate
+        print("Goodbye...")
+        sys.exit(0)  # Exit the program

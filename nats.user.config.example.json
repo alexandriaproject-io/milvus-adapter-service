@@ -1,0 +1,30 @@
+{
+  "authorization": {
+        "users": [
+          {
+            "username": "service-user",
+            "password": "service-user-password",
+            "permissions": {
+              "publish": {
+                "allow": ["_INBOX.>", "milvus.health"]
+              },
+              "subscribe": {
+                "allow": ["milvus.*", "_INBOX.>"]
+              }
+            }
+          },
+          {
+            "username": "service-test-user",
+            "password": "service-test-user-password",
+            "permissions": {
+              "publish": {
+                "allow": ["milvus.>"]
+              },
+              "subscribe": {
+                "allow": ["_INBOX.>"]
+              }
+            }
+          }
+        ]
+      }
+}
