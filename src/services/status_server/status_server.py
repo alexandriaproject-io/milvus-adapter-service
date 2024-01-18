@@ -1,3 +1,4 @@
+import asyncio
 from flask import Flask
 from flask_restx import Api, Resource
 
@@ -34,6 +35,8 @@ class Stats(Resource):
 
 
 def run_flask_app(stats):
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     global shared_stats
     shared_stats = stats
-    app.run(host='0.0.0.0', port=5000, use_reloader=False)
+    app.run(host='0.0.0.0', port=5000, use_reloader=False, )

@@ -1,5 +1,7 @@
 import asyncio
 import ssl
+import time
+
 from src.config import config
 from nats.aio.client import Client as NATS
 from nats.errors import TimeoutError
@@ -23,9 +25,58 @@ async def main():
     # Send a request and expect a single response
     # and trigger timeout if not faster than 500 ms.
     try:
-        response = await nc.request("milvus.add", b'help me', timeout=1)
+        start = time.perf_counter()
+        response = await nc.request("milvus.add", b'help me', timeout=10)
+        print(time.perf_counter() - start)
         print("Received response: {message}".format(
             message=response.data.decode()))
+        start = time.perf_counter()
+        response = await nc.request("milvus.add", b'help me', timeout=10)
+        print(time.perf_counter() - start)
+        print("Received response: {message}".format(
+            message=response.data.decode()))
+        start = time.perf_counter()
+        response = await nc.request("milvus.add", b'help me', timeout=10)
+        print(time.perf_counter() - start)
+        print("Received response: {message}".format(
+            message=response.data.decode()))
+        start = time.perf_counter()
+        response = await nc.request("milvus.add", b'help me', timeout=10)
+        print(time.perf_counter() - start)
+        print("Received response: {message}".format(
+            message=response.data.decode()))
+        start = time.perf_counter()
+        response = await nc.request("milvus.add", b'help me', timeout=10)
+        print(time.perf_counter() - start)
+        print("Received response: {message}".format(
+            message=response.data.decode()))
+        start = time.perf_counter()
+        response = await nc.request("milvus.add", b'help me', timeout=10)
+        print(time.perf_counter() - start)
+        print("Received response: {message}".format(
+            message=response.data.decode()))
+        start = time.perf_counter()
+        response = await nc.request("milvus.add", b'help me', timeout=10)
+        print(time.perf_counter() - start)
+        print("Received response: {message}".format(
+            message=response.data.decode()))
+        start = time.perf_counter()
+        response = await nc.request("milvus.add", b'help me', timeout=10)
+        print(time.perf_counter() - start)
+        print("Received response: {message}".format(
+            message=response.data.decode()))
+        start = time.perf_counter()
+        response = await nc.request("milvus.add", b'help me', timeout=10)
+        print(time.perf_counter() - start)
+        print("Received response: {message}".format(
+            message=response.data.decode()))
+        start = time.perf_counter()
+        response = await nc.request("milvus.add", b'help me', timeout=10)
+        print(time.perf_counter() - start)
+        print("Received response: {message}".format(
+            message=response.data.decode()))
+
+
     except TimeoutError:
         print("Request timed out")
 

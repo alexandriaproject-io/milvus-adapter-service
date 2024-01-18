@@ -1,39 +1,62 @@
 import asyncio
 import ssl
+import time
 from src.config import config
 from nats.aio.client import Client as NATS
 
 
-async def handle_add(msg, nc):
+async def handle_future_and_publish(reply, future):
+    # Wait for the future to be resolved
+    start = time.perf_counter()
+    response = await future
+    # Once resolved, publish the response if a reply subject is provided
+    if reply:
+        await nc.publish(reply, response.encode())
+    print(f"Execution time:{time.perf_counter() - start}")
+
+
+async def handle_add(msg):
+    global execution_queue
+    global nc
     subject = msg.subject
     reply = msg.reply
     data = msg.data.decode()
     print(f"Received a message on '{subject} {reply}': {data}")
-    # Async logic for ADD request
-    response = "Add operation completed"  # Replace with actual response
-    if reply:
-        await nc.publish(reply, response.encode())
+
+    future = asyncio.Future()
+    execution_queue.put(("Add operation completed", future))
+
+    # Not awaiting here on purpose to not block this loop
+    asyncio.create_task(handle_future_and_publish(reply, future))
 
 
-async def handle_get(msg, nc):
+async def handle_get(msg):
+    global execution_queue
+    global nc
     subject = msg.subject
     reply = msg.reply
     data = msg.data.decode()
     print(f"Received a message on '{subject} {reply}': {data}")
-    # Async logic for GET request
-    response = "Get operation result"  # Replace with actual response
-    if reply:
-        await nc.publish(reply, response.encode())
+
+    future = asyncio.Future()
+    execution_queue.put(("Get operation result", future))
+
+    # Not awaiting here on purpose to not block this loop
+    asyncio.create_task(handle_future_and_publish(reply, future))
 
 
-async def help_health(msg, nc):
+async def help_health(msg):
+    global nc
     await nc.publish(msg.reply, b'yes')
 
 
-async def start_nats_client(stats, nats_ready_event):
+async def start_nats_client(stats, executions, nats_ready_event):
     global shared_stats
-    shared_stats = stats
+    global execution_queue
+    global nc
 
+    shared_stats = stats
+    execution_queue = executions
     nc = NATS()
 
     # Configure TLS context
@@ -47,39 +70,40 @@ async def start_nats_client(stats, nats_ready_event):
         tls=tls_context if config.NATS_TLS else None
     )
 
-    # Define a partial function to include the nc parameter in the callback
-    from functools import partial
-    add_request = partial(handle_add, nc=nc)
-    get_request = partial(handle_get, nc=nc)
-    help_request = partial(help_health, nc=nc)
+    await nc.subscribe(subject="milvus.add", cb=handle_add)
+    await nc.subscribe(subject="milvus.get", cb=handle_get)
 
-    # Subscribe to subjects with an async message handler
-    await nc.subscribe("milvus.health", "workers", help_request)
-    await nc.subscribe("milvus.add", "workers", add_request)
-    await nc.subscribe("milvus.get", "workers", get_request)
-
+    await nc.subscribe(subject="milvus.health", cb=help_health)
     print("Listening for messages on 'milvus.add' and 'milvus.get' subjects...")
 
+    await keep_alive(nats_ready_event)
+
+
+async def keep_alive(nats_ready_event):
+    global shared_stats
     # not breaking maybe nats will reconnect properly. k8s will kill the process on its own
+    timer = time.perf_counter()
     while True:
-        await asyncio.sleep(1)  # Sleep for 1 second
-        try:
-            # send health request to nats to check connection
-            response = await nc.request("milvus.health", b'health-check', timeout=1)
-            # expect properly formed response
-            if response.data.decode() == 'yes':
-                shared_stats["nats-alive"] = True
-                # Ready only sets once when service starts and is ignored by k8s afterward so no need to un-set it
-                if not shared_stats["nats-ready"]:
-                    shared_stats["nats-ready"] = True
-                    # tell parent process that nats is ready
-                    nats_ready_event.set()
-            else:
+        await asyncio.sleep(0.001)  # keep it running
+        if time.perf_counter() - timer > 10:
+            timer = time.perf_counter()
+            try:
+                # send health request to nats to check connection
+                response = await nc.request("milvus.health", b'health-check', timeout=1)
+                # expect properly formed response
+                if response.data.decode() == 'yes':
+                    shared_stats["nats-alive"] = True
+                    # Ready only sets once when service starts and is ignored by k8s afterward so no need to un-set it
+                    if not shared_stats["nats-ready"]:
+                        shared_stats["nats-ready"] = True
+                        # tell parent process that nats is ready
+                        nats_ready_event.set()
+                else:
+                    shared_stats["nats-alive"] = False
+                    print("Mismatch health response.")
+            except TimeoutError:
                 shared_stats["nats-alive"] = False
-                print("Mismatch health response.")
-        except TimeoutError:
-            shared_stats["nats-alive"] = False
-            print("Health request timed out.")
-        except Exception as e:
-            shared_stats["nats-alive"] = False
-            print("Error:", e)
+                print("Health request timed out.")
+            except Exception as e:
+                shared_stats["nats-alive"] = False
+                print("Error:", e)
