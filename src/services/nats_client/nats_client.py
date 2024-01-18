@@ -75,7 +75,7 @@ async def start_nats_client(stats, executions, nats_ready_event):
     await nc.subscribe(subject="milvus.get", cb=handle_get)
 
     await nc.subscribe(subject="milvus.health", cb=help_health)
-    print("Listening for messages on 'milvus.add' and 'milvus.get' subjects...")
+    print("Listening for messages on 'milvus.add', 'milvus.get' and 'milvus.health' subjects...")
 
     await keep_alive(nats_ready_event)
 
@@ -83,10 +83,10 @@ async def start_nats_client(stats, executions, nats_ready_event):
 async def keep_alive(nats_ready_event):
     global shared_stats
     # not breaking maybe nats will reconnect properly. k8s will kill the process on its own
-    timer = time.perf_counter()
+    timer = time.perf_counter() - 5
     while True:
         await asyncio.sleep(0.001)  # keep it running
-        if time.perf_counter() - timer > 10:
+        if time.perf_counter() - timer > 5:
             timer = time.perf_counter()
             try:
                 # send health request to nats to check connection

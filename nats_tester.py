@@ -76,6 +76,32 @@ async def main():
         print("Received response: {message}".format(
             message=response.data.decode()))
 
+        start = time.perf_counter()
+        response = await nc.request("milvus.health", b'help me', timeout=10)
+        print(time.perf_counter() - start)
+        print("Received response: {message}".format(
+            message=response.data.decode()))
+        start = time.perf_counter()
+        response = await nc.request("milvus.health", b'help me', timeout=10)
+        print(time.perf_counter() - start)
+        print("Received response: {message}".format(
+            message=response.data.decode()))
+        start = time.perf_counter()
+        response = await nc.request("milvus.health", b'help me', timeout=10)
+        print(time.perf_counter() - start)
+        print("Received response: {message}".format(
+            message=response.data.decode()))
+        start = time.perf_counter()
+        response = await nc.request("milvus.health", b'help me', timeout=10)
+        print(time.perf_counter() - start)
+        print("Received response: {message}".format(
+            message=response.data.decode()))
+        start = time.perf_counter()
+        response = await nc.request("milvus.health", b'help me', timeout=10)
+        print(time.perf_counter() - start)
+        print("Received response: {message}".format(
+            message=response.data.decode()))
+
 
     except TimeoutError:
         print("Request timed out")

@@ -26,17 +26,13 @@ class Alive(Resource):
 
 @ns.route('/stats')
 class Stats(Resource):
+    global shared_stats
     def get(self):
         # Implement stats logic here
-        return {
-            "request_count": 100,  # Example metric
-            "connection_count": 5  # Example metric
-        }, 200
+        return shared_stats, 200
 
 
 def run_flask_app(stats):
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
     global shared_stats
     shared_stats = stats
     app.run(host='0.0.0.0', port=5000, use_reloader=False, )
