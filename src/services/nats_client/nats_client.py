@@ -11,6 +11,7 @@ async def handle_future_and_publish(reply, future):
     response = await future
     # Once resolved, publish the response if a reply subject is provided
     if reply:
+        # TODO: Add try catch here, sometimes the publisher is dead
         await nc.publish(reply, response.encode())
     print(f"Execution time:{time.perf_counter() - start}")
 
