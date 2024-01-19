@@ -1,6 +1,7 @@
 import asyncio
 import ssl
 import time
+import base64
 from logger import log
 from src.config import config
 from nats.aio.client import Client as NATS
@@ -12,8 +13,14 @@ async def handle_future_and_publish(reply, future):
     response = await future
     # Once resolved, publish the response if a reply subject is provided
     if reply:
-        # TODO: Add try catch here, sometimes the publisher is dead
-        await nc.publish(reply, response.encode())
+        try:
+            response_bytes = response.cpu().numpy().tobytes()
+            await nc.publish(reply, base64.b64encode(response_bytes))
+        except TimeoutError as e:
+            log.error(f"Request client timed-out: {e}")
+        except Exception as e:
+            log.error(f"Error in publishing response: {e}")
+
     log.debug(f"handle_future_and_publish execution time:{time.perf_counter() - start}")
 
 
