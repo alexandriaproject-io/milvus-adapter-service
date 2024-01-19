@@ -1,6 +1,7 @@
 import asyncio
 import ssl
 import time
+from logger import log
 from src.config import config
 from nats.aio.client import Client as NATS
 
@@ -13,7 +14,7 @@ async def handle_future_and_publish(reply, future):
     if reply:
         # TODO: Add try catch here, sometimes the publisher is dead
         await nc.publish(reply, response.encode())
-    print(f"Execution time:{time.perf_counter() - start}")
+    log.debug(f"handle_future_and_publish execution time:{time.perf_counter() - start}")
 
 
 async def handle_add(msg):
@@ -22,7 +23,7 @@ async def handle_add(msg):
     subject = msg.subject
     reply = msg.reply
     data = msg.data.decode()
-    print(f"Received a message on '{subject} {reply}': {data}")
+    log.debug(f"Received a message on '{subject} {reply}': {data}")
 
     future = asyncio.Future()
     execution_queue.put(("Add operation completed", future))
@@ -37,7 +38,7 @@ async def handle_get(msg):
     subject = msg.subject
     reply = msg.reply
     data = msg.data.decode()
-    print(f"Received a message on '{subject} {reply}': {data}")
+    log.debug(f"Received a message on '{subject} {reply}': {data}")
 
     future = asyncio.Future()
     execution_queue.put(("Get operation result", future))
@@ -71,11 +72,14 @@ async def start_nats_client(stats, executions, nats_ready_event):
         tls=tls_context if config.NATS_TLS else None
     )
 
-    await nc.subscribe(subject="milvus.add", cb=handle_add)
-    await nc.subscribe(subject="milvus.get", cb=handle_get)
+    await nc.subscribe(subject=f"milvus.add", cb=handle_add)
+    await nc.subscribe(subject=f"milvus.get", cb=handle_get)
+    await nc.subscribe(subject=f"milvus.add.{config.NATS_SUFFIX}", cb=handle_add)
+    await nc.subscribe(subject=f"milvus.get.{config.NATS_SUFFIX}", cb=handle_get)
 
-    await nc.subscribe(subject="milvus.health", cb=help_health)
-    print("Listening for messages on 'milvus.add', 'milvus.get' and 'milvus.health' subjects...")
+    await nc.subscribe(subject=f"milvus.health", cb=help_health)
+    await nc.subscribe(subject=f"milvus.health.{config.NATS_SUFFIX}", cb=help_health)
+    log.info("Listening for messages on 'milvus.add', 'milvus.get' and 'milvus.health' subjects...")
 
     await keep_alive(nats_ready_event)
 
@@ -90,7 +94,7 @@ async def keep_alive(nats_ready_event):
             timer = time.perf_counter()
             try:
                 # send health request to nats to check connection
-                response = await nc.request("milvus.health", b'health-check', timeout=1)
+                response = await nc.request(f"milvus.health.{config.NATS_SUFFIX}", b'health-check', timeout=1)
                 # expect properly formed response
                 if response.data.decode() == 'yes':
                     shared_stats["nats-alive"] = True
@@ -101,10 +105,10 @@ async def keep_alive(nats_ready_event):
                         nats_ready_event.set()
                 else:
                     shared_stats["nats-alive"] = False
-                    print("Mismatch health response.")
+                    log.error("Mismatch health response.")
             except TimeoutError:
                 shared_stats["nats-alive"] = False
-                print("Health request timed out.")
+                log.error("Health request timed out.")
             except Exception as e:
                 shared_stats["nats-alive"] = False
-                print("Error:", e)
+                log.error("Error:", e)

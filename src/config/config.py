@@ -15,6 +15,7 @@ NATS_URL = os.getenv("NATS_URL", "")
 NATS_USER = os.getenv("NATS_USER", "")
 NATS_PASS = os.getenv("NATS_PASS", "")
 NATS_TLS = os.getenv("NATS_TLS", "false").lower() == 'true'
+NATS_SUFFIX = os.getenv("NATS_SUFFIX", "default")
 
 MILVUS_HOSTNAME = os.getenv("MILVUS_HOSTNAME", "")
 MILVUS_PORT = int(os.getenv("MILVUS_PORT", "19530"))
@@ -22,6 +23,12 @@ MILVUS_USERNAME = os.getenv("MILVUS_USERNAME", "")
 MILVUS_PASSWORD = os.getenv("MILVUS_PASSWORD", "")
 MILVUS_USE_TLS = os.getenv("MILVUS_USE_TLS", "False").lower() == 'true'
 MILVUS_WORKERS = int(os.getenv("MILVUS_WORKERS", "2"))
+
+HUGGING_FACE_AUTH_TOKEN = os.getenv("VECTOR_MODEL_PATH", None)
+VECTOR_MODEL_DEVICE = os.getenv("VECTOR_MODEL_DEVICE", None)
+VECTOR_MODEL_PATH = os.getenv("VECTOR_MODEL_PATH", "")
+VECTOR_MODEL_CACHE_FOLDER = os.getenv("VECTOR_MODEL_CACHE_FOLDER", None)
+VECTOR_SEGMENT_COLLECTION = os.getenv("VECTOR_SEGMENT_COLLECTION", "")
 
 NATS_TESTER_USER = os.getenv("NATS_TESTER_USER", "")
 NATS_TESTER_PASS = os.getenv("NATS_TESTER_PASS", "")
@@ -33,4 +40,10 @@ if not NATS_URL or not NATS_USER or not NATS_PASS:
 
 if not MILVUS_HOSTNAME or not MILVUS_USERNAME or not MILVUS_PASSWORD:
     Exception("Missing milvus configurations! Make sure you define MILVUS_HOSTNAME,MILVUS_USERNAME and MILVUS_PASSWORD")
+    exit(1)
+
+if not VECTOR_MODEL_PATH or not VECTOR_SEGMENT_COLLECTION or not NATS_SUFFIX:
+    Exception(
+        "Missing model configurations! Make sure you define VECTOR_MODEL_PATH,VECTOR_SEGMENT_COLLECTION and NATS_SUFFIX"
+    )
     exit(1)

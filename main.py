@@ -2,6 +2,7 @@ from multiprocessing import Manager
 import queue
 import threading
 import asyncio
+from logger import log
 from src.config import config
 from src.services.status_server import status_server
 from src.services.nats_client import nats_client
@@ -17,7 +18,7 @@ if __name__ == '__main__':
     }
 
     for i in range(config.MILVUS_WORKERS):
-        print(f"Starting Milvus worker #{i + 1}")
+        log.info(f"Starting Milvus worker #{i + 1}")
         milvus_ready_event = threading.Event()
         milvus_thread = threading.Thread(
             target=milvus_service.start_milvus_service,
@@ -25,11 +26,11 @@ if __name__ == '__main__':
             daemon=True
         )
         milvus_thread.start()
-        print(f"Waiting for Milvus worker #{i + 1} to be ready")
+        log.info(f"Waiting for Milvus worker #{i + 1} to be ready")
         milvus_ready_event.wait()
 
     # Run the NATS client asynchronously
-    print("Starting Nats client")
+    log.info("Starting Nats client")
     nats_ready_event = threading.Event()
     asyncio_thread = threading.Thread(
         target=asyncio.run,
@@ -37,8 +38,8 @@ if __name__ == '__main__':
         daemon=True
     )
     asyncio_thread.start()
-    print("Waiting for nats to be ready")
+    log.info("Waiting for nats to be ready")
     nats_ready_event.wait()
     # Run the Flask app in a separate thread
-    print("Starting Status server")
+    log.info("Starting Status server")
     status_server.run_flask_app(shared_stats)
