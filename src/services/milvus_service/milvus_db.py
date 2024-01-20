@@ -140,15 +140,17 @@ def upsert_segment(document_id, section_id, segment_id, vectors, collection_name
 def search_segments(
         query_vectors,
         limit=100,
+        offset=None,
         document_ids=None,
-        collection_name=config.VECTOR_SEGMENT_COLLECTION
+        sf=32,
+        collection_name=config.VECTOR_SEGMENT_COLLECTION,
 ):
     collection = get_segments_collection(collection_name)
     search_params = {
         "metric_type": "L2",
         "params": {
-            "ef": 32,  # Specify ef for HNSW index
-            "nprobe": 32  # Specify nprobe for IVF_FLAT index
+            "ef": sf,       # Specify ef for HNSW index
+            "nprobe": sf    # Specify nprobe for IVF_FLAT index
         },
     }
 
@@ -157,6 +159,7 @@ def search_segments(
         anns_field=VECTOR_FIELD_NAME,
         param=search_params,
         limit=limit,
+        offset=offset,
         partition_names=document_ids if document_ids and len(document_ids) > 0 else None,
     )
     return results

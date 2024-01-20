@@ -2,10 +2,24 @@ import asyncio
 import ssl
 import time
 import base64
+import atexit
 from logger import log
 from src.config import config
 from nats.aio.client import Client as NATS
-import atexit
+
+
+async def handle_health_future(future):
+    global shared_stats
+    response = await future
+    shared_stats["milvus-alive"] = response
+
+
+async def check_milvus_health():
+    global execution_queue
+    future = asyncio.Future()
+    execution_queue.put(({"msg_type": "health"}, future))
+    # Not awaiting here on purpose to not block this loop
+    asyncio.create_task(handle_health_future(future))
 
 
 async def handle_future_and_publish(reply, future):
@@ -25,20 +39,14 @@ async def handle_future_and_publish(reply, future):
     log.debug(f"handle_future_and_publish execution time:{time.perf_counter() - start}")
 
 
-async def handle_health_future(future):
-    global shared_stats
-    response = await future
-    shared_stats["milvus-alive"] = response
-
-
 async def handle_add(msg):
     global execution_queue
     global nc
     subject = msg.subject
     reply = msg.reply
     data = msg.data.decode()
-    log.debug(f"Received a message on '{subject} {reply}': {data}")
 
+    log.debug(f"Received a message on '{subject} {reply}': {data}")
     future = asyncio.Future()
     execution_queue.put(({
                              "msg_type": "upsert",
@@ -51,14 +59,35 @@ async def handle_add(msg):
     asyncio.create_task(handle_future_and_publish(reply, future))
 
 
+async def handle_delete(msg):
+    global execution_queue
+    global nc
+    subject = msg.subject
+    reply = msg.reply
+    data = msg.data.decode()
+
+    log.debug(f"Received a message on '{subject} {reply}': {data}")
+    future = asyncio.Future()
+    execution_queue.put(({
+                             "msg_type": "delete",
+                             "query": {
+                                 "document_id": None,
+                                 "section_id": None,
+                                 "segment_id": None,
+                             }
+                         }, future))
+    # Not awaiting here on purpose to not block this loop
+    asyncio.create_task(handle_future_and_publish(reply, future))
+
+
 async def handle_get(msg):
     global execution_queue
     global nc
     subject = msg.subject
     reply = msg.reply
     data = msg.data.decode()
-    log.debug(f"Received a message on '{subject} {reply}': {data}")
 
+    log.debug(f"Received a message on '{subject} {reply}': {data}")
     future = asyncio.Future()
     execution_queue.put(({
                              "msg_type": "search",
@@ -67,17 +96,8 @@ async def handle_get(msg):
                                  "search": "Get operation result"
                              }
                          }, future))
-
     # Not awaiting here on purpose to not block this loop
     asyncio.create_task(handle_future_and_publish(reply, future))
-
-
-async def check_milvus_health():
-    global execution_queue
-    future = asyncio.Future()
-    execution_queue.put(({"msg_type": "health"}, future))
-    # Not awaiting here on purpose to not block this loop
-    asyncio.create_task(handle_health_future(future))
 
 
 async def help_health(msg):
@@ -116,10 +136,18 @@ async def start_nats_client(stats, executions, nats_ready_event):
 
     js = nc.jetstream()
 
-    await js.add_stream(name="milvus_adapter", subjects=[f"milvus.add", f"milvus.add.{config.NATS_SUFFIX}"])
+    await js.add_stream(name="milvus_adapter", subjects=[
+        f"milvus.add",
+        f"milvus.add.{config.NATS_SUFFIX}",
+        f"milvus.del",
+        f"milvus.del.{config.NATS_SUFFIX}"
+    ])
 
     await js.subscribe(subject=f"milvus.add", queue=config.NATS_QUEUE_GROUP, cb=handle_add)
     await js.subscribe(subject=f"milvus.add.{config.NATS_SUFFIX}", queue=config.NATS_QUEUE_GROUP, cb=handle_add)
+
+    await js.subscribe(subject=f"milvus.del", queue=config.NATS_QUEUE_GROUP, cb=handle_delete)
+    await js.subscribe(subject=f"milvus.del.{config.NATS_SUFFIX}", queue=config.NATS_QUEUE_GROUP, cb=handle_delete)
 
     await nc.subscribe(subject=f"milvus.get", queue=config.NATS_QUEUE_GROUP, cb=handle_get)
     await nc.subscribe(subject=f"milvus.get.{config.NATS_SUFFIX}", queue=config.NATS_QUEUE_GROUP, cb=handle_get)
