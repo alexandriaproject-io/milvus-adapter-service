@@ -30,6 +30,15 @@ def drop_collection(collection_name):
         old_collection.drop()
 
 
+def is_healthy():
+    try:
+        utility.list_collections(using=CONNECTION_NAME, timeout=5)
+        return True
+    except Exception as e:
+        log.error("Milvus connection timed out")
+        return False
+
+
 def create_segments_collection(collection_name=config.VECTOR_SEGMENT_COLLECTION, dim=config.VECTOR_DIM):
     # Check if collection already exists
     if collection_name in utility.list_collections():
@@ -161,6 +170,7 @@ def delete_item_by_id(collection, item_id):
 
 
 def milvus_define_collections(re_create=False):
+    log.info(f"Collections list: {utility.list_collections()}")
     if re_create:
         drop_collection(config.VECTOR_SEGMENT_COLLECTION)
     create_segments_collection().load()

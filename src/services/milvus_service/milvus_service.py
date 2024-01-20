@@ -2,6 +2,7 @@ import time
 from src.config import config
 from src.services.milvus_service.milvus_db import milvus_connect, milvus_define_collections
 from src.models.vectorizer.model import SentenceModel
+from src.services.milvus_service.milvus_db import is_healthy
 from logger import log
 
 
@@ -30,16 +31,22 @@ def start_milvus_service(stats, task_queue, milvus_ready_event, worker_id):
         if task_queue.empty():
             time.sleep(0.001)
             continue
-        task, future = task_queue.get()
-        if task is None:  # Shutdown signal
+        task_tuple = task_queue.get()
+        if task_tuple is None:  # Shutdown signal
             log.info(f"Worker #{worker_id}: Closing milvus service")
             task_queue.put(None)
             break
+            
+        task, future = task_tuple
         try:
-            log.debug(f"Worker #{worker_id}: Picked up a task")
+            if task.get("msg_type") == 'health':
+                future.set_result(is_healthy())
+                continue
+
+            log.debug(f"Worker #{worker_id}: Picked up a task {task}")
             start = time.perf_counter()
             result = vectorizer.embed_text(task)
             log.debug(f"Worker #{worker_id}: Task finished in {time.perf_counter() - start}s")
-            future.set_result(result)
+            future.set_result(result.cpu())
         except Exception as e:
             future.set_exception(e)

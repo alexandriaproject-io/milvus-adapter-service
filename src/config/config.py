@@ -17,6 +17,7 @@ NATS_PASS = os.getenv("NATS_PASS", "")
 NATS_TLS = os.getenv("NATS_TLS", "false").lower() == 'true'
 NATS_SUFFIX = os.getenv("NATS_SUFFIX", "default")
 NATS_QUEUE_GROUP = os.getenv("NATS_QUEUE_GROUP", None)
+NATS_GRACE_TIME = int(os.getenv("NATS_GRACE_TIME", "10"))
 
 MILVUS_HOSTNAME = os.getenv("MILVUS_HOSTNAME", "")
 MILVUS_PORT = int(os.getenv("MILVUS_PORT", "19530"))

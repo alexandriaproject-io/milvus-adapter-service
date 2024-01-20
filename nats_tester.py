@@ -25,6 +25,19 @@ async def main():
     # Send a request and expect a single response
     # and trigger timeout if not faster than 500 ms.
     try:
+        await nc.publish("milvus.add", b'help me')
+        await nc.publish("milvus.add", b'help me')
+        await nc.publish("milvus.add", b'help me')
+        await nc.publish("milvus.add", b'help me')
+        await nc.publish("milvus.add", b'help me')
+        await nc.publish("milvus.add", b'help me')
+        await nc.publish("milvus.add", b'help me')
+        await nc.publish("milvus.add", b'help me')
+        await nc.publish("milvus.add", b'help me')
+        await nc.publish("milvus.add", b'help me')
+        await nc.publish("milvus.add", b'help me')
+        await nc.publish("milvus.add", b'help me')
+        await nc.publish("milvus.add", b'help me')
         start = time.perf_counter()
         response = await nc.request("milvus.add", b'help me', timeout=10)
         print(time.perf_counter() - start)
