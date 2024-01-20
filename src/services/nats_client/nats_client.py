@@ -79,13 +79,13 @@ async def start_nats_client(stats, executions, nats_ready_event):
         tls=tls_context if config.NATS_TLS else None
     )
 
-    await nc.subscribe(subject=f"milvus.add", cb=handle_add)
-    await nc.subscribe(subject=f"milvus.get", cb=handle_get)
-    await nc.subscribe(subject=f"milvus.add.{config.NATS_SUFFIX}", cb=handle_add)
-    await nc.subscribe(subject=f"milvus.get.{config.NATS_SUFFIX}", cb=handle_get)
+    await nc.subscribe(subject=f"milvus.add", queue=config.NATS_QUEUE_GROUP, cb=handle_add)
+    await nc.subscribe(subject=f"milvus.get", queue=config.NATS_QUEUE_GROUP, cb=handle_get)
+    await nc.subscribe(subject=f"milvus.add.{config.NATS_SUFFIX}", queue=config.NATS_QUEUE_GROUP, cb=handle_add)
+    await nc.subscribe(subject=f"milvus.get.{config.NATS_SUFFIX}", queue=config.NATS_QUEUE_GROUP, cb=handle_get)
 
-    await nc.subscribe(subject=f"milvus.health", cb=help_health)
-    await nc.subscribe(subject=f"milvus.health.{config.NATS_SUFFIX}", cb=help_health)
+    await nc.subscribe(subject=f"milvus.health", queue=config.NATS_QUEUE_GROUP, cb=help_health)
+    await nc.subscribe(subject=f"milvus.health.{config.NATS_SUFFIX}", queue=config.NATS_QUEUE_GROUP, cb=help_health)
     log.info("Listening for messages on 'milvus.add', 'milvus.get' and 'milvus.health' subjects...")
 
     await keep_alive(nats_ready_event)

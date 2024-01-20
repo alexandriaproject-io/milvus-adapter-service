@@ -8,4 +8,4 @@ if log_level is None:
 
 logging.basicConfig(level=log_level)
 
-log = logging.getLogger("LLM-INFERENCE")
+log = logging.getLogger("MILVUS-ADAPTER")
