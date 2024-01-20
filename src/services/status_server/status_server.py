@@ -1,5 +1,5 @@
 import asyncio
-from flask import Flask
+from flask import Flask, send_from_directory
 from flask_restx import Api, Resource
 
 app = Flask(__name__)
@@ -27,9 +27,16 @@ class Alive(Resource):
 @ns.route('/stats')
 class Stats(Resource):
     global shared_stats
+
     def get(self):
         # Implement stats logic here
         return shared_stats, 200
+
+
+# Route to serve HTML files
+@app.route('/html/<path:filename>')
+def serve_html(filename):
+    return send_from_directory(app.static_folder, filename)
 
 
 def run_flask_app(stats):

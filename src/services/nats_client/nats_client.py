@@ -136,7 +136,7 @@ async def start_nats_client(stats, executions, nats_ready_event):
 
     js = nc.jetstream()
 
-    await js.add_stream(name="milvus_adapter", subjects=[
+    await js.update_stream(name="milvus_adapter", subjects=[
         f"milvus.add",
         f"milvus.add.{config.NATS_SUFFIX}",
         f"milvus.del",
@@ -168,8 +168,7 @@ async def keep_alive():
         await asyncio.sleep(0.001)  # keep it running
         if time.perf_counter() - timer > 5:
             try:
-                # send health request to nats to check connection, there is no reason to await this.
-                check_milvus_health()
+                await check_milvus_health()
 
                 response = await nc.request(f"milvus.health.{config.NATS_SUFFIX}", b'health-check', timeout=1)
                 # expect properly formed response
