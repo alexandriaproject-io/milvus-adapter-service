@@ -21,25 +21,29 @@ struct MilvusSegmentDeletePayload {
 
 
 struct L2SegmentSearchResult {
-  1: double distance,
-  2: string document_id,
-  3: string section_id,
-  4: string segment_id
+  1: double distance,               // Distance value
+  2: string document_id,            // document_id of the result
+  3: string section_id,             // section_id of the result
+  4: string segment_id              // segment_id of the result
 }
 
 struct L2SegmentSearchResponse {
-  2: list<list<L2SegmentSearchResult>> results,
-  3: i32 total
+  1: list<L2SegmentSearchResult> results,   // List of results
+  2: i32 total                              // Results count
+  3: bool is_error                          // Is error or not
+  4: optional string error_text             // Error message text
 }
 
-struct L2SegmentSearchErrorResponse {
-  1: string error_text      // Error message text
-  2: string error_id        // Id of the error as appears in the service logs
+struct L2SegmentUpsertResponse {
+    1: i32 insert_count             // Inserted segments
+    2: i32 updated_count            // Updated segments
+    3: bool is_error                // Is error or not
+    4: optional string error_text   // Error message text
 }
 
-struct L2SegmentSearchUpsertResponse {
-    1: i32 insert_count     // Inserted segments
-    2: i32 updated_count    // Updated segments
+struct L2SegmentDeleteResponse {
+    1: i32 deleted_count            // Deleted segments
+    3: bool is_error                // Is error or not
+    4: optional string error_text   // Error message text
 }
-
 

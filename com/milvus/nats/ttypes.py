@@ -389,13 +389,17 @@ class L2SegmentSearchResponse(object):
     Attributes:
      - results
      - total
+     - is_error
+     - error_text
 
     """
 
 
-    def __init__(self, results=None, total=None,):
+    def __init__(self, results=None, total=None, is_error=None, error_text=None,):
         self.results = results
         self.total = total
+        self.is_error = is_error
+        self.error_text = error_text
 
     def read(self, iprot):
         if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
@@ -406,25 +410,30 @@ class L2SegmentSearchResponse(object):
             (fname, ftype, fid) = iprot.readFieldBegin()
             if ftype == TType.STOP:
                 break
-            if fid == 2:
+            if fid == 1:
                 if ftype == TType.LIST:
                     self.results = []
                     (_etype10, _size7) = iprot.readListBegin()
                     for _i11 in range(_size7):
-                        _elem12 = []
-                        (_etype16, _size13) = iprot.readListBegin()
-                        for _i17 in range(_size13):
-                            _elem18 = L2SegmentSearchResult()
-                            _elem18.read(iprot)
-                            _elem12.append(_elem18)
-                        iprot.readListEnd()
+                        _elem12 = L2SegmentSearchResult()
+                        _elem12.read(iprot)
                         self.results.append(_elem12)
                     iprot.readListEnd()
                 else:
                     iprot.skip(ftype)
-            elif fid == 3:
+            elif fid == 2:
                 if ftype == TType.I32:
                     self.total = iprot.readI32()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 3:
+                if ftype == TType.BOOL:
+                    self.is_error = iprot.readBool()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 4:
+                if ftype == TType.STRING:
+                    self.error_text = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             else:
@@ -438,87 +447,24 @@ class L2SegmentSearchResponse(object):
             return
         oprot.writeStructBegin('L2SegmentSearchResponse')
         if self.results is not None:
-            oprot.writeFieldBegin('results', TType.LIST, 2)
-            oprot.writeListBegin(TType.LIST, len(self.results))
-            for iter19 in self.results:
-                oprot.writeListBegin(TType.STRUCT, len(iter19))
-                for iter20 in iter19:
-                    iter20.write(oprot)
-                oprot.writeListEnd()
+            oprot.writeFieldBegin('results', TType.LIST, 1)
+            oprot.writeListBegin(TType.STRUCT, len(self.results))
+            for iter13 in self.results:
+                iter13.write(oprot)
             oprot.writeListEnd()
             oprot.writeFieldEnd()
         if self.total is not None:
-            oprot.writeFieldBegin('total', TType.I32, 3)
+            oprot.writeFieldBegin('total', TType.I32, 2)
             oprot.writeI32(self.total)
             oprot.writeFieldEnd()
-        oprot.writeFieldStop()
-        oprot.writeStructEnd()
-
-    def validate(self):
-        return
-
-    def __repr__(self):
-        L = ['%s=%r' % (key, value)
-             for key, value in self.__dict__.items()]
-        return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
-
-    def __eq__(self, other):
-        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
-
-    def __ne__(self, other):
-        return not (self == other)
-
-
-class L2SegmentSearchErrorResponse(object):
-    """
-    Attributes:
-     - error_text
-     - error_id
-
-    """
-
-
-    def __init__(self, error_text=None, error_id=None,):
-        self.error_text = error_text
-        self.error_id = error_id
-
-    def read(self, iprot):
-        if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
-            iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])
-            return
-        iprot.readStructBegin()
-        while True:
-            (fname, ftype, fid) = iprot.readFieldBegin()
-            if ftype == TType.STOP:
-                break
-            if fid == 1:
-                if ftype == TType.STRING:
-                    self.error_text = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
-                else:
-                    iprot.skip(ftype)
-            elif fid == 2:
-                if ftype == TType.STRING:
-                    self.error_id = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
-                else:
-                    iprot.skip(ftype)
-            else:
-                iprot.skip(ftype)
-            iprot.readFieldEnd()
-        iprot.readStructEnd()
-
-    def write(self, oprot):
-        if oprot._fast_encode is not None and self.thrift_spec is not None:
-            oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
-            return
-        oprot.writeStructBegin('L2SegmentSearchErrorResponse')
+        if self.is_error is not None:
+            oprot.writeFieldBegin('is_error', TType.BOOL, 3)
+            oprot.writeBool(self.is_error)
+            oprot.writeFieldEnd()
         if self.error_text is not None:
-            oprot.writeFieldBegin('error_text', TType.STRING, 1)
+            oprot.writeFieldBegin('error_text', TType.STRING, 4)
             oprot.writeString(self.error_text.encode('utf-8') if sys.version_info[0] == 2 else self.error_text)
             oprot.writeFieldEnd()
-        if self.error_id is not None:
-            oprot.writeFieldBegin('error_id', TType.STRING, 2)
-            oprot.writeString(self.error_id.encode('utf-8') if sys.version_info[0] == 2 else self.error_id)
-            oprot.writeFieldEnd()
         oprot.writeFieldStop()
         oprot.writeStructEnd()
 
@@ -537,18 +483,22 @@ class L2SegmentSearchErrorResponse(object):
         return not (self == other)
 
 
-class L2SegmentSearchUpsertResponse(object):
+class L2SegmentUpsertResponse(object):
     """
     Attributes:
      - insert_count
      - updated_count
+     - is_error
+     - error_text
 
     """
 
 
-    def __init__(self, insert_count=None, updated_count=None,):
+    def __init__(self, insert_count=None, updated_count=None, is_error=None, error_text=None,):
         self.insert_count = insert_count
         self.updated_count = updated_count
+        self.is_error = is_error
+        self.error_text = error_text
 
     def read(self, iprot):
         if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
@@ -569,6 +519,16 @@ class L2SegmentSearchUpsertResponse(object):
                     self.updated_count = iprot.readI32()
                 else:
                     iprot.skip(ftype)
+            elif fid == 3:
+                if ftype == TType.BOOL:
+                    self.is_error = iprot.readBool()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 4:
+                if ftype == TType.STRING:
+                    self.error_text = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
+                else:
+                    iprot.skip(ftype)
             else:
                 iprot.skip(ftype)
             iprot.readFieldEnd()
@@ -578,7 +538,7 @@ class L2SegmentSearchUpsertResponse(object):
         if oprot._fast_encode is not None and self.thrift_spec is not None:
             oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
             return
-        oprot.writeStructBegin('L2SegmentSearchUpsertResponse')
+        oprot.writeStructBegin('L2SegmentUpsertResponse')
         if self.insert_count is not None:
             oprot.writeFieldBegin('insert_count', TType.I32, 1)
             oprot.writeI32(self.insert_count)
@@ -586,6 +546,93 @@ class L2SegmentSearchUpsertResponse(object):
         if self.updated_count is not None:
             oprot.writeFieldBegin('updated_count', TType.I32, 2)
             oprot.writeI32(self.updated_count)
+            oprot.writeFieldEnd()
+        if self.is_error is not None:
+            oprot.writeFieldBegin('is_error', TType.BOOL, 3)
+            oprot.writeBool(self.is_error)
+            oprot.writeFieldEnd()
+        if self.error_text is not None:
+            oprot.writeFieldBegin('error_text', TType.STRING, 4)
+            oprot.writeString(self.error_text.encode('utf-8') if sys.version_info[0] == 2 else self.error_text)
+            oprot.writeFieldEnd()
+        oprot.writeFieldStop()
+        oprot.writeStructEnd()
+
+    def validate(self):
+        return
+
+    def __repr__(self):
+        L = ['%s=%r' % (key, value)
+             for key, value in self.__dict__.items()]
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+    def __ne__(self, other):
+        return not (self == other)
+
+
+class L2SegmentDeleteResponse(object):
+    """
+    Attributes:
+     - deleted_count
+     - is_error
+     - error_text
+
+    """
+
+
+    def __init__(self, deleted_count=None, is_error=None, error_text=None,):
+        self.deleted_count = deleted_count
+        self.is_error = is_error
+        self.error_text = error_text
+
+    def read(self, iprot):
+        if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
+            iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])
+            return
+        iprot.readStructBegin()
+        while True:
+            (fname, ftype, fid) = iprot.readFieldBegin()
+            if ftype == TType.STOP:
+                break
+            if fid == 1:
+                if ftype == TType.I32:
+                    self.deleted_count = iprot.readI32()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 3:
+                if ftype == TType.BOOL:
+                    self.is_error = iprot.readBool()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 4:
+                if ftype == TType.STRING:
+                    self.error_text = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
+                else:
+                    iprot.skip(ftype)
+            else:
+                iprot.skip(ftype)
+            iprot.readFieldEnd()
+        iprot.readStructEnd()
+
+    def write(self, oprot):
+        if oprot._fast_encode is not None and self.thrift_spec is not None:
+            oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
+            return
+        oprot.writeStructBegin('L2SegmentDeleteResponse')
+        if self.deleted_count is not None:
+            oprot.writeFieldBegin('deleted_count', TType.I32, 1)
+            oprot.writeI32(self.deleted_count)
+            oprot.writeFieldEnd()
+        if self.is_error is not None:
+            oprot.writeFieldBegin('is_error', TType.BOOL, 3)
+            oprot.writeBool(self.is_error)
+            oprot.writeFieldEnd()
+        if self.error_text is not None:
+            oprot.writeFieldBegin('error_text', TType.STRING, 4)
+            oprot.writeString(self.error_text.encode('utf-8') if sys.version_info[0] == 2 else self.error_text)
             oprot.writeFieldEnd()
         oprot.writeFieldStop()
         oprot.writeStructEnd()
@@ -639,21 +686,26 @@ L2SegmentSearchResult.thrift_spec = (
 all_structs.append(L2SegmentSearchResponse)
 L2SegmentSearchResponse.thrift_spec = (
     None,  # 0
-    None,  # 1
-    (2, TType.LIST, 'results', (TType.LIST, (TType.STRUCT, [L2SegmentSearchResult, None], False), False), None, ),  # 2
-    (3, TType.I32, 'total', None, None, ),  # 3
+    (1, TType.LIST, 'results', (TType.STRUCT, [L2SegmentSearchResult, None], False), None, ),  # 1
+    (2, TType.I32, 'total', None, None, ),  # 2
+    (3, TType.BOOL, 'is_error', None, None, ),  # 3
+    (4, TType.STRING, 'error_text', 'UTF8', None, ),  # 4
 )
-all_structs.append(L2SegmentSearchErrorResponse)
-L2SegmentSearchErrorResponse.thrift_spec = (
-    None,  # 0
-    (1, TType.STRING, 'error_text', 'UTF8', None, ),  # 1
-    (2, TType.STRING, 'error_id', 'UTF8', None, ),  # 2
-)
-all_structs.append(L2SegmentSearchUpsertResponse)
-L2SegmentSearchUpsertResponse.thrift_spec = (
+all_structs.append(L2SegmentUpsertResponse)
+L2SegmentUpsertResponse.thrift_spec = (
     None,  # 0
     (1, TType.I32, 'insert_count', None, None, ),  # 1
     (2, TType.I32, 'updated_count', None, None, ),  # 2
+    (3, TType.BOOL, 'is_error', None, None, ),  # 3
+    (4, TType.STRING, 'error_text', 'UTF8', None, ),  # 4
+)
+all_structs.append(L2SegmentDeleteResponse)
+L2SegmentDeleteResponse.thrift_spec = (
+    None,  # 0
+    (1, TType.I32, 'deleted_count', None, None, ),  # 1
+    None,  # 2
+    (3, TType.BOOL, 'is_error', None, None, ),  # 3
+    (4, TType.STRING, 'error_text', 'UTF8', None, ),  # 4
 )
 fix_spec(all_structs)
 del all_structs

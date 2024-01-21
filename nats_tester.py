@@ -5,7 +5,8 @@ import time
 from src.config import config
 from nats.aio.client import Client as NATS
 from nats.errors import TimeoutError
-
+from src.utils import thrift_read, thrift_to_binary
+from com.milvus.nats.ttypes import L2SegmentUpsertResponse, MilvusSegmentUpsertPayload
 async def main():
 
     nc = NATS()
@@ -25,97 +26,48 @@ async def main():
     # Send a request and expect a single response
     # and trigger timeout if not faster than 500 ms.
     try:
-        await nc.publish("milvus.add", b'help me')
-        await nc.publish("milvus.add", b'help me')
-        await nc.publish("milvus.add", b'help me')
-        await nc.publish("milvus.add", b'help me')
-        await nc.publish("milvus.add", b'help me')
-        await nc.publish("milvus.add", b'help me')
-        await nc.publish("milvus.add", b'help me')
-        await nc.publish("milvus.add", b'help me')
-        await nc.publish("milvus.add", b'help me')
-        await nc.publish("milvus.add", b'help me')
-        await nc.publish("milvus.add", b'help me')
-        await nc.publish("milvus.add", b'help me')
-        await nc.publish("milvus.add", b'help me')
-        start = time.perf_counter()
-        response = await nc.request("milvus.add", b'help me', timeout=10)
-        print(time.perf_counter() - start)
-        print("Received response: {message}".format(
-            message=response.data.decode()))
-        start = time.perf_counter()
-        response = await nc.request("milvus.add", b'help me', timeout=10)
-        print(time.perf_counter() - start)
-        print("Received response: {message}".format(
-            message=response.data.decode()))
-        start = time.perf_counter()
-        response = await nc.request("milvus.add", b'help me', timeout=10)
-        print(time.perf_counter() - start)
-        print("Received response: {message}".format(
-            message=response.data.decode()))
-        start = time.perf_counter()
-        response = await nc.request("milvus.add", b'help me', timeout=10)
-        print(time.perf_counter() - start)
-        print("Received response: {message}".format(
-            message=response.data.decode()))
-        start = time.perf_counter()
-        response = await nc.request("milvus.add", b'help me', timeout=10)
-        print(time.perf_counter() - start)
-        print("Received response: {message}".format(
-            message=response.data.decode()))
-        start = time.perf_counter()
-        response = await nc.request("milvus.add", b'help me', timeout=10)
-        print(time.perf_counter() - start)
-        print("Received response: {message}".format(
-            message=response.data.decode()))
-        start = time.perf_counter()
-        response = await nc.request("milvus.add", b'help me', timeout=10)
-        print(time.perf_counter() - start)
-        print("Received response: {message}".format(
-            message=response.data.decode()))
-        start = time.perf_counter()
-        response = await nc.request("milvus.add", b'help me', timeout=10)
-        print(time.perf_counter() - start)
-        print("Received response: {message}".format(
-            message=response.data.decode()))
-        start = time.perf_counter()
-        response = await nc.request("milvus.add", b'help me', timeout=10)
-        print(time.perf_counter() - start)
-        print("Received response: {message}".format(
-            message=response.data.decode()))
-        start = time.perf_counter()
-        response = await nc.request("milvus.add", b'help me', timeout=10)
-        print(time.perf_counter() - start)
-        print("Received response: {message}".format(
-            message=response.data.decode()))
 
         start = time.perf_counter()
-        response = await nc.request("milvus.health", b'help me', timeout=10)
-        print(time.perf_counter() - start)
-        print("Received response: {message}".format(
-            message=response.data.decode()))
-        start = time.perf_counter()
-        response = await nc.request("milvus.health", b'help me', timeout=10)
-        print(time.perf_counter() - start)
-        print("Received response: {message}".format(
-            message=response.data.decode()))
-        start = time.perf_counter()
-        response = await nc.request("milvus.health", b'help me', timeout=10)
-        print(time.perf_counter() - start)
-        print("Received response: {message}".format(
-            message=response.data.decode()))
-        start = time.perf_counter()
-        response = await nc.request("milvus.health", b'help me', timeout=10)
-        print(time.perf_counter() - start)
-        print("Received response: {message}".format(
-            message=response.data.decode()))
-        start = time.perf_counter()
-        response = await nc.request("milvus.health", b'help me', timeout=10)
-        print(time.perf_counter() - start)
-        print("Received response: {message}".format(
-            message=response.data.decode()))
+        payload = MilvusSegmentUpsertPayload(
+            segment_text="help me",
+            segment_id="segment",
+            section_id="section",
+            document_id="document"
+        )
 
+        response = await nc.request("milvus.add", thrift_to_binary(payload), timeout=10)
 
+        print(time.perf_counter() - start)
+        record = thrift_read(response.data, L2SegmentUpsertResponse)
+        print(record)
+
+        start = time.perf_counter()
+        payload = MilvusSegmentUpsertPayload(
+            segment_text="help me 2",
+            segment_id="segment2",
+            section_id="section2",
+            document_id="document2"
+        )
+
+        response = await nc.request("milvus.add", thrift_to_binary(payload), timeout=10)
+
+        print(time.perf_counter() - start)
+        record = thrift_read(response.data, L2SegmentUpsertResponse)
+        print(record)
+
+        start = time.perf_counter()
+        payload = MilvusSegmentUpsertPayload(
+            segment_text="help me 3",
+            segment_id="segment3",
+            section_id="section3",
+            document_id="document3"
+        )
+
+        response = await nc.request("milvus.add", thrift_to_binary(payload), timeout=10)
+
+        print(time.perf_counter() - start)
+        record = thrift_read(response.data, L2SegmentUpsertResponse)
+        print(record)
     except TimeoutError:
         print("Request timed out")
 

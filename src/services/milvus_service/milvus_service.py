@@ -1,8 +1,7 @@
 import time
 from src.config import config
-from src.services.milvus_service.milvus_db import milvus_connect, milvus_define_collections
+from src.services.milvus_service.milvus_db import is_healthy, milvus_connect, milvus_define_collections, upsert_segment
 from src.models.vectorizer.model import SentenceModel
-from src.services.milvus_service.milvus_db import is_healthy
 from logger import log
 
 
@@ -36,17 +35,28 @@ def start_milvus_service(stats, task_queue, milvus_ready_event, worker_id):
             log.info(f"Worker #{worker_id}: Closing milvus service")
             task_queue.put(None)
             break
-            
+
         task, future = task_tuple
         try:
-            if task.get("msg_type") == 'health':
+            msg_type = task.get("msg_type", "unknown")
+            if msg_type == 'health':
                 future.set_result(is_healthy())
                 continue
 
             log.debug(f"Worker #{worker_id}: Picked up a task {task}")
             start = time.perf_counter()
-            result = vectorizer.embed_text(task)
+            result = {"error": f"Unknown message type {msg_type}"}
+            if msg_type == "upsert":
+                segment = task.get("query", {})
+                vectors = vectorizer.embed_text(segment.get("text", "Unknown")).cpu().numpy()
+                result = upsert_segment(
+                    document_id=segment.get("document_id", None),
+                    section_id=segment.get("section_id", None),
+                    segment_id=segment.get("segment_id", None),
+                    vectors=vectors
+                )
+
             log.debug(f"Worker #{worker_id}: Task finished in {time.perf_counter() - start}s")
-            future.set_result(result.cpu())
+            future.set_result(result)
         except Exception as e:
-            future.set_exception(e)
+            future.set_result({"error": f"Unknown message type: {e}"})

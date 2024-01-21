@@ -120,21 +120,24 @@ def get_segments_collection(collection_name=config.VECTOR_SEGMENT_COLLECTION):
 
 
 def upsert_segment(document_id, section_id, segment_id, vectors, collection_name=config.VECTOR_SEGMENT_COLLECTION):
-    if not segment_id or not section_id or not document_id or not vectors:
+    if not segment_id or not section_id or not document_id or vectors is None or vectors.size == 0:
         raise ValueError("Missing required fields")
 
     data = [
-        f"{document_id}:{section_id}:{segment_id}",
-        document_id,
-        section_id,
-        vectors
+        [f"{document_id}:{section_id}:{segment_id}"],
+        [document_id],
+        [section_id],
+        [vectors]
     ]
 
     collection = get_segments_collection(collection_name)
     mr = collection.upsert(data)
 
     # Return insert results, which might be useful for debugging or validation
-    return mr
+    return {
+        "upsert_count": mr.upsert_count,
+        "insert_count": mr.insert_count,
+    }
 
 
 def search_segments(
