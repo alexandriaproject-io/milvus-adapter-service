@@ -1,6 +1,13 @@
 import time
 from src.config import config
-from src.services.milvus_service.milvus_db import is_healthy, milvus_connect, milvus_define_collections, upsert_segment
+from src.services.milvus_service.milvus_db import (
+    is_healthy,
+    milvus_connect,
+    milvus_define_collections,
+    upsert_segment,
+    search_segments,
+    delete_segment
+)
 from src.models.vectorizer.model import SentenceModel
 from logger import log
 
@@ -55,7 +62,23 @@ def start_milvus_service(stats, task_queue, milvus_ready_event, worker_id):
                     segment_id=segment.get("segment_id", None),
                     vectors=vectors
                 )
-
+            elif msg_type == "search":
+                query = task.get("query", {})
+                vectors = vectorizer.embed_text(query.get("search", "Unknown")).cpu().numpy()
+                result = search_segments(
+                    query_vectors=vectors,
+                    document_ids=query.get("document_ids", None),
+                    offset=query.get("offset", None),
+                    limit=query.get("limit", None),
+                    sf=query.get("sf", None),
+                )
+            elif msg_type == "delete":
+                query = task.get("query", {})
+                result = delete_segment(
+                    document_id=query.get("document_id", None),
+                    section_id=query.get("section_id", None),
+                    segment_id=query.get("segment_id", None),
+                )
             log.debug(f"Worker #{worker_id}: Task finished in {time.perf_counter() - start}s")
             future.set_result(result)
         except Exception as e:

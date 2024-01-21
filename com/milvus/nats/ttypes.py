@@ -487,16 +487,18 @@ class L2SegmentUpsertResponse(object):
     """
     Attributes:
      - insert_count
-     - updated_count
+     - update_count
+     - delete_count
      - is_error
      - error_text
 
     """
 
 
-    def __init__(self, insert_count=None, updated_count=None, is_error=None, error_text=None,):
+    def __init__(self, insert_count=None, update_count=None, delete_count=None, is_error=None, error_text=None,):
         self.insert_count = insert_count
-        self.updated_count = updated_count
+        self.update_count = update_count
+        self.delete_count = delete_count
         self.is_error = is_error
         self.error_text = error_text
 
@@ -516,15 +518,20 @@ class L2SegmentUpsertResponse(object):
                     iprot.skip(ftype)
             elif fid == 2:
                 if ftype == TType.I32:
-                    self.updated_count = iprot.readI32()
+                    self.update_count = iprot.readI32()
                 else:
                     iprot.skip(ftype)
             elif fid == 3:
+                if ftype == TType.I32:
+                    self.delete_count = iprot.readI32()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 4:
                 if ftype == TType.BOOL:
                     self.is_error = iprot.readBool()
                 else:
                     iprot.skip(ftype)
-            elif fid == 4:
+            elif fid == 5:
                 if ftype == TType.STRING:
                     self.error_text = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                 else:
@@ -543,16 +550,20 @@ class L2SegmentUpsertResponse(object):
             oprot.writeFieldBegin('insert_count', TType.I32, 1)
             oprot.writeI32(self.insert_count)
             oprot.writeFieldEnd()
-        if self.updated_count is not None:
-            oprot.writeFieldBegin('updated_count', TType.I32, 2)
-            oprot.writeI32(self.updated_count)
+        if self.update_count is not None:
+            oprot.writeFieldBegin('update_count', TType.I32, 2)
+            oprot.writeI32(self.update_count)
+            oprot.writeFieldEnd()
+        if self.delete_count is not None:
+            oprot.writeFieldBegin('delete_count', TType.I32, 3)
+            oprot.writeI32(self.delete_count)
             oprot.writeFieldEnd()
         if self.is_error is not None:
-            oprot.writeFieldBegin('is_error', TType.BOOL, 3)
+            oprot.writeFieldBegin('is_error', TType.BOOL, 4)
             oprot.writeBool(self.is_error)
             oprot.writeFieldEnd()
         if self.error_text is not None:
-            oprot.writeFieldBegin('error_text', TType.STRING, 4)
+            oprot.writeFieldBegin('error_text', TType.STRING, 5)
             oprot.writeString(self.error_text.encode('utf-8') if sys.version_info[0] == 2 else self.error_text)
             oprot.writeFieldEnd()
         oprot.writeFieldStop()
@@ -576,15 +587,15 @@ class L2SegmentUpsertResponse(object):
 class L2SegmentDeleteResponse(object):
     """
     Attributes:
-     - deleted_count
+     - delete_count
      - is_error
      - error_text
 
     """
 
 
-    def __init__(self, deleted_count=None, is_error=None, error_text=None,):
-        self.deleted_count = deleted_count
+    def __init__(self, delete_count=None, is_error=None, error_text=None,):
+        self.delete_count = delete_count
         self.is_error = is_error
         self.error_text = error_text
 
@@ -599,7 +610,7 @@ class L2SegmentDeleteResponse(object):
                 break
             if fid == 1:
                 if ftype == TType.I32:
-                    self.deleted_count = iprot.readI32()
+                    self.delete_count = iprot.readI32()
                 else:
                     iprot.skip(ftype)
             elif fid == 3:
@@ -622,9 +633,9 @@ class L2SegmentDeleteResponse(object):
             oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
             return
         oprot.writeStructBegin('L2SegmentDeleteResponse')
-        if self.deleted_count is not None:
-            oprot.writeFieldBegin('deleted_count', TType.I32, 1)
-            oprot.writeI32(self.deleted_count)
+        if self.delete_count is not None:
+            oprot.writeFieldBegin('delete_count', TType.I32, 1)
+            oprot.writeI32(self.delete_count)
             oprot.writeFieldEnd()
         if self.is_error is not None:
             oprot.writeFieldBegin('is_error', TType.BOOL, 3)
@@ -695,14 +706,15 @@ all_structs.append(L2SegmentUpsertResponse)
 L2SegmentUpsertResponse.thrift_spec = (
     None,  # 0
     (1, TType.I32, 'insert_count', None, None, ),  # 1
-    (2, TType.I32, 'updated_count', None, None, ),  # 2
-    (3, TType.BOOL, 'is_error', None, None, ),  # 3
-    (4, TType.STRING, 'error_text', 'UTF8', None, ),  # 4
+    (2, TType.I32, 'update_count', None, None, ),  # 2
+    (3, TType.I32, 'delete_count', None, None, ),  # 3
+    (4, TType.BOOL, 'is_error', None, None, ),  # 4
+    (5, TType.STRING, 'error_text', 'UTF8', None, ),  # 5
 )
 all_structs.append(L2SegmentDeleteResponse)
 L2SegmentDeleteResponse.thrift_spec = (
     None,  # 0
-    (1, TType.I32, 'deleted_count', None, None, ),  # 1
+    (1, TType.I32, 'delete_count', None, None, ),  # 1
     None,  # 2
     (3, TType.BOOL, 'is_error', None, None, ),  # 3
     (4, TType.STRING, 'error_text', 'UTF8', None, ),  # 4

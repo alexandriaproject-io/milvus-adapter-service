@@ -36,13 +36,14 @@ struct L2SegmentSearchResponse {
 
 struct L2SegmentUpsertResponse {
     1: i32 insert_count             // Inserted segments
-    2: i32 updated_count            // Updated segments
-    3: bool is_error                // Is error or not
-    4: optional string error_text   // Error message text
+    2: i32 update_count            // Updated segments
+    3: i32 delete_count             // Deleted segments
+    4: bool is_error                // Is error or not
+    5: optional string error_text   // Error message text
 }
 
 struct L2SegmentDeleteResponse {
-    1: i32 deleted_count            // Deleted segments
+    1: i32 delete_count             // Deleted segments
     3: bool is_error                // Is error or not
     4: optional string error_text   // Error message text
 }

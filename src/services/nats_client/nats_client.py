@@ -54,8 +54,9 @@ async def handle_get_future(reply, future):
             record.error_text = results.get("error", "Unknown error")
         else:
             record.is_error = False
-            record.total = len(results)
-            for result in results:
+            result_items = results.get("items", [])
+            record.total = len(result_items)
+            for result in result_items:
                 ids = result.get("id", "::").split(":")
                 record.results.append(L2SegmentSearchResult(
                     distance=result.get("distance", 0),
@@ -99,11 +100,13 @@ async def handle_add_future(reply, future):
             record.is_error = True
             record.error_text = results.get("error", "Unknown error")
             record.insert_count = 0
-            record.updated_count = 0
+            record.update_count = 0
+            record.delete_count = 0
         else:
             record.is_error = False
             record.insert_count = results.get("insert_count", 0)
-            record.updated_count = results.get("upsert_count", 0)
+            record.update_count = results.get("upsert_count", 0)
+            record.delete_count = results.get("delete_count", 0)
         await send_reply(reply, record)
     log.debug(f"handle_add_future execution time: {time.perf_counter() - start}")
 
@@ -138,16 +141,15 @@ async def handle_delete_future(reply, future):
         if results.get("error", None):
             record.is_error = True
             record.error_text = results.get("error", "Unknown error")
-            record.deleted_count = 0
+            record.delete_count = 0
         else:
             record.is_error = False
-            record.deleted_count = results.get("deleted_count", 0)
+            record.delete_count = results.get("delete_count", 0)
         await send_reply(reply, record)
     log.debug(f"handle_delete_future execution time: {time.perf_counter() - start}")
 
 
 async def handle_delete(msg):
-    print("handle_delete")
     global execution_queue
     global nc
     subject = msg.subject

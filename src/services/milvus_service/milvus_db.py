@@ -137,6 +137,7 @@ def upsert_segment(document_id, section_id, segment_id, vectors, collection_name
     return {
         "upsert_count": mr.upsert_count,
         "insert_count": mr.insert_count,
+        "delete_count": mr.delete_count,
     }
 
 
@@ -152,25 +153,38 @@ def search_segments(
     search_params = {
         "metric_type": "L2",
         "params": {
-            "ef": sf,       # Specify ef for HNSW index
-            "nprobe": sf    # Specify nprobe for IVF_FLAT index
+            "ef": sf,  # Specify ef for HNSW index
+            "nprobe": sf  # Specify nprobe for IVF_FLAT index
         },
     }
 
     results = collection.search(
-        data=query_vectors,
+        data=[query_vectors],
         anns_field=VECTOR_FIELD_NAME,
         param=search_params,
         limit=limit,
         offset=offset,
-        partition_names=document_ids if document_ids and len(document_ids) > 0 else None,
+        expr=f"document_id in {document_ids}" if document_ids and len(document_ids) > 0 else None,
     )
-    return results
+
+    return {
+        "items": [{"id": hit.id, "distance": hit.distance} for result in results for hit in result]
+    }
+
+
+def delete_segment(document_id, section_id, segment_id, collection_name=config.VECTOR_SEGMENT_COLLECTION):
+    if not segment_id or not section_id or not document_id:
+        raise ValueError("Missing required fields")
+    collection = get_segments_collection(collection_name)
+    status = delete_item_by_id(collection, f"{document_id}:{section_id}:{segment_id}")
+    return {
+        "delete_count": status.delete_count
+    }
 
 
 def delete_item_by_id(collection, item_id):
     log.warn("Removing items may cause performance spikes")
-    status = collection.delete(expr=f"id == {item_id}")
+    status = collection.delete(expr=f"segment_id in {[item_id]}")
     collection.load()
     return status
 

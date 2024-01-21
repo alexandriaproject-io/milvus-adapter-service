@@ -6,9 +6,17 @@ from src.config import config
 from nats.aio.client import Client as NATS
 from nats.errors import TimeoutError
 from src.utils import thrift_read, thrift_to_binary
-from com.milvus.nats.ttypes import L2SegmentUpsertResponse, MilvusSegmentUpsertPayload
-async def main():
+from com.milvus.nats.ttypes import (
+    MilvusSegmentUpsertPayload,
+    MilvusSegmentGetRequest,
+    MilvusSegmentDeletePayload,
+    L2SegmentUpsertResponse,
+    L2SegmentSearchResponse,
+    L2SegmentDeleteResponse
+)
 
+
+async def main():
     nc = NATS()
 
     # Configure TLS context
@@ -68,16 +76,118 @@ async def main():
         print(time.perf_counter() - start)
         record = thrift_read(response.data, L2SegmentUpsertResponse)
         print(record)
+
+        ##############################################
+        ##############################################
+        ##############################################
+        ##############################################
+
+        start = time.perf_counter()
+        payload = MilvusSegmentGetRequest(
+            search="help me",
+            sf=33,
+            offset=0,
+            limit=101,
+            document_ids=None
+        )
+
+        response = await nc.request("milvus.get", thrift_to_binary(payload), timeout=10)
+
+        print(time.perf_counter() - start)
+        record = thrift_read(response.data, L2SegmentSearchResponse)
+        print(record)
+
+        start = time.perf_counter()
+        payload = MilvusSegmentGetRequest(
+            search="help me",
+            sf=33,
+            offset=0,
+            limit=101,
+            document_ids=["document3", "document2"]
+        )
+
+        response = await nc.request("milvus.get", thrift_to_binary(payload), timeout=10)
+
+        print(time.perf_counter() - start)
+        record = thrift_read(response.data, L2SegmentSearchResponse)
+        print(record)
+
+        start = time.perf_counter()
+        payload = MilvusSegmentGetRequest(
+            search="help me",
+            sf=33,
+            offset=0,
+            limit=101,
+            document_ids=["non-existent"]
+        )
+
+        response = await nc.request("milvus.get", thrift_to_binary(payload), timeout=10)
+
+        print(time.perf_counter() - start)
+        record = thrift_read(response.data, L2SegmentSearchResponse)
+        print(record)
+
+        ##################################################
+        ##################################################
+        ##################################################
+        ##################################################
+        ##################################################
+
+        start = time.perf_counter()
+        payload = MilvusSegmentGetRequest(
+            search="help me",
+            sf=33,
+            offset=0,
+            limit=101,
+            document_ids=None
+        )
+
+        response = await nc.request("milvus.get", thrift_to_binary(payload), timeout=10)
+
+        print(time.perf_counter() - start)
+        record = thrift_read(response.data, L2SegmentSearchResponse)
+        print(record)
+
+        items = record.results
+        for item in items:
+            start = time.perf_counter()
+            payload = MilvusSegmentDeletePayload(
+                document_id=item.document_id,
+                section_id=item.section_id,
+                segment_id=item.segment_id,
+
+            )
+            response = await nc.request("milvus.del", thrift_to_binary(payload), timeout=10)
+
+            print(time.perf_counter() - start)
+            record = thrift_read(response.data, L2SegmentDeleteResponse)
+            print(record)
+        #############################################################
+        #############################################################
+        #############################################################
+        #############################################################
+        #############################################################
+
+        start = time.perf_counter()
+        payload = MilvusSegmentGetRequest(
+            search="help me",
+            sf=33,
+            offset=0,
+            limit=101,
+            document_ids=None
+        )
+
+        response = await nc.request("milvus.get", thrift_to_binary(payload), timeout=10)
+
+        print(time.perf_counter() - start)
+        record = thrift_read(response.data, L2SegmentSearchResponse)
+        print(record)
     except TimeoutError:
         print("Request timed out")
-
 
     # Terminate connection to NATS.
     await nc.drain()
 
+
 if __name__ == '__main__':
     asyncio.run(main())
-
-
-
-
