@@ -5,147 +5,28 @@ import atexit
 from logger import log
 from src.config import config
 from nats.aio.client import Client as NATS
-from src.utils import thrift_read
 from src.services.nats_client.health_controller import check_milvus_health
-from src.services.nats_client.nats_utils import send_reply
-from com.milvus.nats.ttypes import (
-    MilvusSegmentGetRequest,
-    MilvusSegmentUpsertPayload,
-    MilvusSegmentDeletePayload,
-    L2SegmentSearchResponse,
-    L2SegmentSearchResult,
-    L2SegmentUpsertResponse,
-    L2SegmentDeleteResponse
-)
+from src.services.nats_client.get_controller import handle_get
+from src.services.nats_client.add_controller import handle_add
+from src.services.nats_client.delete_controller import handle_delete
 
 
-async def handle_get_future(reply, future):
-    start = time.perf_counter()
-    results = await future
-    if reply:
-        record = L2SegmentSearchResponse()
-        record.results = []
-        if results.get("error", None):
-            record.total = 0
-            record.is_error = True
-            record.error_text = results.get("error", "Unknown error")
-        else:
-            record.is_error = False
-            result_items = results.get("items", [])
-            record.total = len(result_items)
-            for result in result_items:
-                ids = result.get("id", "::").split(":")
-                record.results.append(L2SegmentSearchResult(
-                    distance=result.get("distance", 0),
-                    document_id=ids[0],
-                    section_id=ids[1] if len(ids) > 1 else '',
-                    segment_id=ids[2] if len(ids) > 2 else '',
-                ))
-        await send_reply(nc, reply, record)
-    log.debug(f"handle_get_future execution time: {time.perf_counter() - start}")
-
-
-async def handle_get(msg):
+async def call_get_controller(msg):
     global execution_queue
     global nc
-    subject = msg.subject
-    reply = msg.reply
-    record = thrift_read(msg.data, MilvusSegmentGetRequest)
-    if record:
-        log.debug(f"Received a message on '{subject} {reply}'")
-        future = asyncio.Future()
-        execution_queue.put(({
-                                 "msg_type": "search",
-                                 "query": {
-                                     "search": record.search,
-                                     "document_ids": record.document_ids,
-                                     "offset": record.offset,
-                                     "limit": record.limit,
-                                     "sf": record.sf,
-                                 }
-                             }, future))
-        # Not awaiting here on purpose to not block this loop
-        asyncio.create_task(handle_get_future(reply, future))
+    await handle_get(msg, nc, execution_queue)
 
 
-async def handle_add_future(reply, future):
-    global nc
-    start = time.perf_counter()
-    results = await future
-    if reply:
-        record = L2SegmentUpsertResponse()
-        if results.get("error", None):
-            record.is_error = True
-            record.error_text = results.get("error", "Unknown error")
-            record.insert_count = 0
-            record.update_count = 0
-            record.delete_count = 0
-        else:
-            record.is_error = False
-            record.insert_count = results.get("insert_count", 0)
-            record.update_count = results.get("upsert_count", 0)
-            record.delete_count = results.get("delete_count", 0)
-        await send_reply(nc, reply, record)
-    log.debug(f"handle_add_future execution time: {time.perf_counter() - start}")
-
-
-async def handle_add(msg):
-    global execution_queue
-    subject = msg.subject
-    reply = msg.reply
-    record = thrift_read(msg.data, MilvusSegmentUpsertPayload)
-    if record:
-        log.debug(f"Received a message on '{subject} {reply}'")
-        future = asyncio.Future()
-        execution_queue.put(({
-                                 "msg_type": "upsert",
-                                 "query": {
-                                     "text": record.segment_text,
-                                     "document_id": record.document_id,
-                                     "section_id": record.section_id,
-                                     "segment_id": record.segment_id,
-                                 }
-                             }, future))
-        # Not awaiting here on purpose to not block this loop
-        asyncio.create_task(handle_add_future(reply, future))
-
-
-async def handle_delete_future(reply, future):
-    global nc
-    start = time.perf_counter()
-    results = await future
-    if reply:
-        record = L2SegmentDeleteResponse()
-        if results.get("error", None):
-            record.is_error = True
-            record.error_text = results.get("error", "Unknown error")
-            record.delete_count = 0
-        else:
-            record.is_error = False
-            record.delete_count = results.get("delete_count", 0)
-        await send_reply(nc, reply, record)
-    log.debug(f"handle_delete_future execution time: {time.perf_counter() - start}")
-
-
-async def handle_delete(msg):
+async def call_add_controller(msg):
     global execution_queue
     global nc
-    subject = msg.subject
-    reply = msg.reply
-    record = thrift_read(msg.data, MilvusSegmentDeletePayload)
-    if record:
-        log.debug(f"Received a message on '{subject} {reply}'")
-        future = asyncio.Future()
-        execution_queue.put(({
-                                 "msg_type": "delete",
-                                 "query": {
-                                     "document_id": record.document_id,
-                                     "section_id": record.section_id,
-                                     "segment_id": record.segment_id,
-                                 }
-                             }, future))
-        # Not awaiting here on purpose to not block this loop
-        asyncio.create_task(handle_delete_future(reply, future))
+    await handle_add(msg, nc, execution_queue)
+
+
+async def call_delete_controller(msg):
+    global execution_queue
+    global nc
+    await handle_delete(msg, nc, execution_queue)
 
 
 async def help_health(msg):
@@ -184,8 +65,9 @@ async def start_nats_client(stats, executions, nats_ready_event):
 
     js = nc.jetstream()
 
+    # Do not delete this, used for stream debugging
     # await js.delete_stream(name="milvus_adapter")
-    # await js.add_stream(name="milvus_adapter", subjects=[
+    # await js.add_stream(name="milvus_adapter", subjects=[])
     await js.update_stream(name="milvus_adapter", subjects=[
         f"milvus.js.add",
         f"milvus.js.add.{config.NATS_SUFFIX}",
@@ -194,26 +76,26 @@ async def start_nats_client(stats, executions, nats_ready_event):
     ])
 
     # Milvus ADD js and request-reply
-    await js.subscribe(subject=f"milvus.js.add", queue=f"{config.NATS_QUEUE_GROUP}-add", cb=handle_add)
+    await js.subscribe(subject=f"milvus.js.add", queue=f"{config.NATS_QUEUE_GROUP}-add", cb=call_add_controller)
     await js.subscribe(subject=f"milvus.js.add.{config.NATS_SUFFIX}", queue=f"{config.NATS_QUEUE_GROUP}-add",
-                       cb=handle_add)
-    await nc.subscribe(subject=f"milvus.add", queue=f"{config.NATS_QUEUE_GROUP}-add", cb=handle_add)
+                       cb=call_add_controller)
+    await nc.subscribe(subject=f"milvus.add", queue=f"{config.NATS_QUEUE_GROUP}-add", cb=call_add_controller)
     await nc.subscribe(subject=f"milvus.add.{config.NATS_SUFFIX}", queue=f"{config.NATS_QUEUE_GROUP}-add",
-                       cb=handle_add)
+                       cb=call_add_controller)
 
     # Milvus DELETE js and request-reply
-    await js.subscribe(subject=f"milvus.js.del", queue=f"{config.NATS_QUEUE_GROUP}-del", cb=handle_delete)
+    await js.subscribe(subject=f"milvus.js.del", queue=f"{config.NATS_QUEUE_GROUP}-del", cb=call_delete_controller)
     await js.subscribe(subject=f"milvus.js.del.{config.NATS_SUFFIX}", queue=f"{config.NATS_QUEUE_GROUP}-del",
-                       cb=handle_delete)
+                       cb=call_delete_controller)
 
-    await nc.subscribe(subject=f"milvus.del", queue=f"{config.NATS_QUEUE_GROUP}-del", cb=handle_delete)
+    await nc.subscribe(subject=f"milvus.del", queue=f"{config.NATS_QUEUE_GROUP}-del", cb=call_delete_controller)
     await nc.subscribe(subject=f"milvus.del.{config.NATS_SUFFIX}", queue=f"{config.NATS_QUEUE_GROUP}-del",
-                       cb=handle_delete)
+                       cb=call_delete_controller)
 
     # Milvus GET request reply
-    await nc.subscribe(subject=f"milvus.get", queue=f"{config.NATS_QUEUE_GROUP}-add", cb=handle_get)
+    await nc.subscribe(subject=f"milvus.get", queue=f"{config.NATS_QUEUE_GROUP}-add", cb=call_get_controller)
     await nc.subscribe(subject=f"milvus.get.{config.NATS_SUFFIX}", queue=f"{config.NATS_QUEUE_GROUP}-add",
-                       cb=handle_get)
+                       cb=call_get_controller)
 
     # Milvus HEALTH request reply
     await nc.subscribe(subject=f"milvus.health", queue=f"{config.NATS_QUEUE_GROUP}-health", cb=help_health)
