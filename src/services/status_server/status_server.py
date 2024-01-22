@@ -1,15 +1,11 @@
-import asyncio
 from flask import Flask, send_from_directory
 from flask_restx import Api, Resource
 
 app = Flask(__name__)
 api = Api(app, version='1.0', title='My API', description='A simple API')
-
-# Define a namespace
 ns = api.namespace('api', description='Main operations')
 
 
-# Define resource classes
 @ns.route('/ready')
 class Ready(Resource):
     def get(self):
@@ -26,9 +22,9 @@ class Alive(Resource):
 
 @ns.route('/stats')
 class Stats(Resource):
-    global shared_stats
 
     def get(self):
+        global shared_stats
         # Implement stats logic here
         return shared_stats, 200
 
