@@ -16,20 +16,9 @@ from com.milvus.nats.ttypes import (
     L2SegmentDeleteResponse
 )
 from src.utils import thrift_read, thrift_to_binary
+from src.services.nats_client.health_controller import check_milvus_health
 
 
-async def handle_health_future(future):
-    global shared_stats
-    response = await future
-    shared_stats["milvus-alive"] = response
-
-
-async def check_milvus_health():
-    global execution_queue
-    future = asyncio.Future()
-    execution_queue.put(({"msg_type": "health"}, future))
-    # Not awaiting here on purpose to not block this loop
-    asyncio.create_task(handle_health_future(future))
 
 
 async def send_reply(reply, thrift_obj):
@@ -249,13 +238,14 @@ async def start_nats_client(stats, executions, nats_ready_event):
 
 async def keep_alive():
     global shared_stats
+    global execution_queue
     # not breaking maybe nats will reconnect properly. k8s will kill the process on its own
     timer = time.perf_counter() - 5
     while True:
         await asyncio.sleep(0.001)  # keep it running
         if time.perf_counter() - timer > 5:
             try:
-                await check_milvus_health()
+                await check_milvus_health(execution_queue=execution_queue, shared_stats=shared_stats)
 
                 response = await nc.request(f"milvus.health.{config.NATS_SUFFIX}", b'health-check', timeout=1)
                 # expect properly formed response
