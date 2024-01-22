@@ -1,11 +1,13 @@
 import asyncio
 import ssl
 import time
-import base64
 import atexit
 from logger import log
 from src.config import config
 from nats.aio.client import Client as NATS
+from src.utils import thrift_read
+from src.services.nats_client.health_controller import check_milvus_health
+from src.services.nats_client.nats_utils import send_reply
 from com.milvus.nats.ttypes import (
     MilvusSegmentGetRequest,
     MilvusSegmentUpsertPayload,
@@ -15,20 +17,6 @@ from com.milvus.nats.ttypes import (
     L2SegmentUpsertResponse,
     L2SegmentDeleteResponse
 )
-from src.utils import thrift_read, thrift_to_binary
-from src.services.nats_client.health_controller import check_milvus_health
-
-
-
-
-async def send_reply(reply, thrift_obj):
-    if reply:
-        try:
-            await nc.publish(reply, thrift_to_binary(thrift_obj))
-        except TimeoutError as e:
-            log.error(f"Request client timed-out: {e}")
-        except Exception as e:
-            log.error(f"Error in publishing response: {e}")
 
 
 async def handle_get_future(reply, future):
@@ -53,7 +41,7 @@ async def handle_get_future(reply, future):
                     section_id=ids[1] if len(ids) > 1 else '',
                     segment_id=ids[2] if len(ids) > 2 else '',
                 ))
-        await send_reply(reply, record)
+        await send_reply(nc, reply, record)
     log.debug(f"handle_get_future execution time: {time.perf_counter() - start}")
 
 
@@ -81,6 +69,7 @@ async def handle_get(msg):
 
 
 async def handle_add_future(reply, future):
+    global nc
     start = time.perf_counter()
     results = await future
     if reply:
@@ -96,13 +85,12 @@ async def handle_add_future(reply, future):
             record.insert_count = results.get("insert_count", 0)
             record.update_count = results.get("upsert_count", 0)
             record.delete_count = results.get("delete_count", 0)
-        await send_reply(reply, record)
+        await send_reply(nc, reply, record)
     log.debug(f"handle_add_future execution time: {time.perf_counter() - start}")
 
 
 async def handle_add(msg):
     global execution_queue
-    global nc
     subject = msg.subject
     reply = msg.reply
     record = thrift_read(msg.data, MilvusSegmentUpsertPayload)
@@ -123,6 +111,7 @@ async def handle_add(msg):
 
 
 async def handle_delete_future(reply, future):
+    global nc
     start = time.perf_counter()
     results = await future
     if reply:
@@ -134,7 +123,7 @@ async def handle_delete_future(reply, future):
         else:
             record.is_error = False
             record.delete_count = results.get("delete_count", 0)
-        await send_reply(reply, record)
+        await send_reply(nc, reply, record)
     log.debug(f"handle_delete_future execution time: {time.perf_counter() - start}")
 
 
