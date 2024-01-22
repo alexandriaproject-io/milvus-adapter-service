@@ -168,6 +168,8 @@ async def main():
         #############################################################
         #############################################################
 
+        print("Waiting for milvus to catch up")
+        time.sleep(3)
         start = time.perf_counter()
         payload = MilvusSegmentGetRequest(
             search="help me",

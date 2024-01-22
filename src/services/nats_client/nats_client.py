@@ -5,10 +5,12 @@ import atexit
 from logger import log
 from src.config import config
 from nats.aio.client import Client as NATS
-from src.services.nats_client.health_controller import check_milvus_health
+
+from src.services.nats_client.nats_utils import keep_alive
 from src.services.nats_client.get_controller import handle_get
 from src.services.nats_client.add_controller import handle_add
 from src.services.nats_client.delete_controller import handle_delete
+from src.services.nats_client.health_controller import check_milvus_health
 
 
 async def call_get_controller(msg):
@@ -104,44 +106,4 @@ async def start_nats_client(stats, executions, nats_ready_event):
     log.info("Listening for messages on 'milvus.add', 'milvus.get' and 'milvus.health' subjects...")
 
     nats_ready_event.set()
-    await keep_alive()
-
-
-async def keep_alive():
-    global shared_stats
-    global execution_queue
-    # not breaking maybe nats will reconnect properly. k8s will kill the process on its own
-    timer = time.perf_counter() - 5
-    while True:
-        await asyncio.sleep(0.001)  # keep it running
-        if time.perf_counter() - timer > 5:
-            try:
-                await check_milvus_health(execution_queue=execution_queue, shared_stats=shared_stats)
-
-                response = await nc.request(f"milvus.health.{config.NATS_SUFFIX}", b'health-check', timeout=1)
-                # expect properly formed response
-                if response.data.decode() == 'yes':
-                    shared_stats["nats-alive"] = True
-                    # Ready only sets once when service starts and is ignored by k8s afterward so no need to un-set it
-                    if not shared_stats["nats-ready"]:
-                        shared_stats["nats-ready"] = True
-                else:
-                    shared_stats["nats-alive"] = False
-                    log.error("Mismatch health response.")
-
-            except TimeoutError:
-                shared_stats["nats-alive"] = False
-                log.error("Health request timed out.")
-                # Nats is finicky about loss of connection so we close it and kill the service
-                execution_queue.put(None)
-                await nc.close()
-                break
-            except Exception as e:
-                shared_stats["nats-alive"] = False
-                log.error("Error: %s", e)
-                # Nats is finicky about loss of connection so we close it and kill the service
-                execution_queue.put(None)
-                await nc.close()
-                break
-            finally:
-                timer = time.perf_counter()
+    await keep_alive(nc, shared_stats, execution_queue, check_milvus_health)
