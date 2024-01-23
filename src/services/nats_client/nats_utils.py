@@ -23,7 +23,6 @@ async def keep_alive(nc, shared_stats, execution_queue, check_milvus_health):
         if time.perf_counter() - timer > 5:
             try:
                 await check_milvus_health(execution_queue=execution_queue, shared_stats=shared_stats)
-
                 response = await nc.request(f"milvus.health.{config.NATS_SUFFIX}", b'health-check', timeout=1)
                 # expect properly formed response
                 if response.data.decode() == 'yes':
@@ -34,7 +33,6 @@ async def keep_alive(nc, shared_stats, execution_queue, check_milvus_health):
                 else:
                     shared_stats["nats-alive"] = False
                     log.error("Mismatch health response.")
-
             except TimeoutError:
                 shared_stats["nats-alive"] = False
                 log.error("Health request timed out.")

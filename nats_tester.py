@@ -86,6 +86,21 @@ async def main():
             search="help me",
             sf=33,
             offset=0,
+            limit=-101,
+            document_ids=None
+        )
+
+        response = await nc.request("milvus.get", thrift_to_binary(payload), timeout=10)
+
+        print(time.perf_counter() - start)
+        record = thrift_read(response.data, L2SegmentSearchResponse)
+        print(record)
+
+        start = time.perf_counter()
+        payload = MilvusSegmentGetRequest(
+            search="help me",
+            sf=33,
+            offset=0,
             limit=101,
             document_ids=None
         )
@@ -246,7 +261,8 @@ async def main():
 
             )
             await nc.publish("milvus.js.del", thrift_to_binary(payload))
-            print(f"Deleting document_id:{item.document_id}, section_id:{item.section_id}, segment_id:{item.segment_id}")
+            print(
+                f"Deleting document_id:{item.document_id}, section_id:{item.section_id}, segment_id:{item.segment_id}")
         print()
         print("Forcing flashing on nats before sleep blocking")
 
