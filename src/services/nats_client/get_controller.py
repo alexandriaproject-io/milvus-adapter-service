@@ -1,6 +1,6 @@
 import asyncio
 import time
-from logger import log
+from src.logger import log
 from src.utils import thrift_read
 from src.services.nats_client.nats_utils import send_reply
 from com.milvus.nats.ttypes import (

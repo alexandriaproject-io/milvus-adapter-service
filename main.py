@@ -2,7 +2,7 @@ from multiprocessing import Manager
 import queue
 import threading
 import asyncio
-from logger import log
+from src.logger import log
 from src.config import config
 from src.services.status_server import status_server
 from src.services.nats_client import nats_client

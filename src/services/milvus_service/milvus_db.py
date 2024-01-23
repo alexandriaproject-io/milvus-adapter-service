@@ -1,3 +1,4 @@
+from src.logger import log
 from src.config import config
 from pymilvus import (
     connections,
@@ -8,7 +9,6 @@ from pymilvus import (
     Collection,
     IndexType
 )
-from logger import log
 
 CONNECTION_NAME = "default"
 VECTOR_FIELD_NAME = "content_embeddings"

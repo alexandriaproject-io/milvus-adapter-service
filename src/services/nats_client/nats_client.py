@@ -1,8 +1,6 @@
-import asyncio
 import ssl
 import time
 import atexit
-from logger import log
 from src.config import config
 from nats.aio.client import Client as NATS
 from src.services.nats_client.nats_utils import keep_alive, subscribe_nats_routes

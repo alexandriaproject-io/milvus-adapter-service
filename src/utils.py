@@ -1,4 +1,4 @@
-from logger import log
+from src.logger import log
 from thrift.protocol import TBinaryProtocol
 from thrift.transport import TTransport
 from typing import Type, TypeVar, Any, Union

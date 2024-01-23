@@ -1,4 +1,4 @@
-from logger import log
+from src.logger import log
 from sentence_transformers import SentenceTransformer
 
 

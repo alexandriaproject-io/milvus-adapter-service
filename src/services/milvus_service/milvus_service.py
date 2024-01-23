@@ -1,5 +1,7 @@
 import time
+from src.logger import log
 from src.config import config
+from src.models.vectorizer.model import SentenceModel
 from src.services.milvus_service.milvus_db import (
     is_healthy,
     milvus_connect,
@@ -8,8 +10,6 @@ from src.services.milvus_service.milvus_db import (
     search_segments,
     delete_segment
 )
-from src.models.vectorizer.model import SentenceModel
-from logger import log
 
 
 def start_milvus_service(stats, task_queue, milvus_ready_event, worker_id):

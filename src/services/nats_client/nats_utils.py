@@ -1,7 +1,7 @@
 import time
 import asyncio
 from src.config import config
-from logger import log
+from src.logger import log
 from src.utils import thrift_to_binary
 
 
