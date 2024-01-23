@@ -18,7 +18,6 @@ from com.milvus.nats.ttypes import (
 
 async def main():
     nc = NATS()
-
     # Configure TLS context
     tls_context = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH)
 
@@ -142,6 +141,13 @@ async def main():
             document_ids=None
         )
 
+        payload = MilvusSegmentGetRequest(
+            search="help me",
+            sf=33,
+            offset=0,
+            limit=101,
+            document_ids=None
+        )
         response = await nc.request("milvus.get", thrift_to_binary(payload), timeout=10)
 
         print(time.perf_counter() - start)
@@ -184,6 +190,83 @@ async def main():
         print(time.perf_counter() - start)
         record = thrift_read(response.data, L2SegmentSearchResponse)
         print(record)
+
+        #############################################################
+        #############################################################
+        #############################################################
+        #############################################################
+        #############################################################
+        #############################################################
+        print()
+        print()
+        print()
+        print("Testing jetstream")
+
+        payload = MilvusSegmentUpsertPayload(segment_text="help me", segment_id="segment", section_id="section",
+                                             document_id="document")
+
+        await nc.publish("milvus.js.add", thrift_to_binary(payload))
+        print(f"Adding document_id:document3, section_id:section3, segment_id:segment3")
+        payload = MilvusSegmentUpsertPayload(segment_text="help me 2", segment_id="segment2", section_id="section2",
+                                             document_id="document2")
+
+        await nc.publish("milvus.js.add", thrift_to_binary(payload))
+        print(f"Adding document_id:document3, section_id:section3, segment_id:segment3")
+        payload = MilvusSegmentUpsertPayload(segment_text="help me 3", segment_id="segment3", section_id="section3",
+                                             document_id="document3")
+        print(f"Adding document_id:document3, section_id:section3, segment_id:segment3")
+        await nc.publish("milvus.js.add", thrift_to_binary(payload))
+        print()
+        print("Forcing flashing on nats before sleep blocking")
+        await nc.flush()
+        time.sleep(1)
+        time.sleep(1)
+        time.sleep(1)
+
+        payload = MilvusSegmentGetRequest(
+            search="help me",
+            sf=33,
+            offset=0,
+            limit=101,
+            document_ids=None
+        )
+
+        response = await nc.request("milvus.get", thrift_to_binary(payload), timeout=10)
+
+        print(time.perf_counter() - start)
+        record = thrift_read(response.data, L2SegmentSearchResponse)
+        print(record)
+        print()
+        items = record.results
+        for item in items:
+            payload = MilvusSegmentDeletePayload(
+                document_id=item.document_id,
+                section_id=item.section_id,
+                segment_id=item.segment_id,
+
+            )
+            await nc.publish("milvus.js.del", thrift_to_binary(payload))
+            print(f"Deleting document_id:{item.document_id}, section_id:{item.section_id}, segment_id:{item.segment_id}")
+        print()
+        print("Forcing flashing on nats before sleep blocking")
+
+        await nc.flush()
+        time.sleep(3)
+
+        payload = MilvusSegmentGetRequest(
+            search="help me",
+            sf=33,
+            offset=0,
+            limit=101,
+            document_ids=None
+        )
+        response = await nc.request("milvus.get", thrift_to_binary(payload), timeout=10)
+
+        print(time.perf_counter() - start)
+        record = thrift_read(response.data, L2SegmentSearchResponse)
+        print(record)
+
+
     except TimeoutError:
         print("Request timed out")
 
