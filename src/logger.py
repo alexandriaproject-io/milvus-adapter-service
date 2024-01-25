@@ -9,3 +9,6 @@ if log_level is None:
 logging.basicConfig(level=log_level)
 
 log = logging.getLogger("MILVUS-ADAPTER")
+
+werkzeug_log = logging.getLogger('werkzeug')
+werkzeug_log.setLevel(logging.ERROR)
