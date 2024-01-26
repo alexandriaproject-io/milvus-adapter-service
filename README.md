@@ -1,2 +1,120 @@
 # milvus-adapter-service
-Simple service to connect milvus to nats-io messaging queue and integrate with AI
+
+The Milvus adapter service simplifies interactions like searching or adding items by vectorizing texts independently,
+eliminating the need for using vectors directly. It also integrates NATS.io messaging with Jetstream and employs Thrift
+message wrapping for communication with other services.
+
+## Milvus Adapter Service Customization
+
+The service offers customization options including nats subscription modifiers, selection of indexing methods like
+IVF_FLAT or HNSW, choice of vectorizing models, and custom collection name. These features enable the service to operate
+across multiple deployments, handling diverse data sets such as text or images.
+Milvus Adapter Service architecture:
+
+## Table of contents
+
+- [Milvus Adapter Service Architecture](#milvus-adapter-service-architecture)
+- [Milvus Adapter Service Flow diagram](#milvus-adapter-service-flow-diagram)
+- [Status API](#status-api)
+- [ENV parameters](#env-parameters)
+    - [Status API server configuration](#status-api-server-configuration)
+    - [Nats connection configuration](#nats-connection-configuration)
+    - [Milvus connection configuration](#milvus-connection-configuration)
+    - [Vectorizing configurations](#vectorizing-configurations)
+    - [Vectorizer model config](#vectorizer-model-config)
+    - [Nats tester config](#nats-tester-config)
+- [Run locally](#run-locally)
+
+## Milvus Adapter Service Architecture
+
+![Alt text](svgs/Milvus Adapter.drawio.svg)
+
+## Milvus Adapter Service Flow diagram
+
+TBD
+
+## Status API
+
+The service exposes status endpoints to allow for easier integration and health monitoring:
+
+- Liveness on http://127.0.0.1:5000/api/alive
+- Readiness on http://127.0.0.1:5000/api/ready
+- Stats on http://127.0.0.1:5000/api/stats
+
+Additionally, the service will expose swagger and Thrift object documentation at:
+
+- Swagger docs on http://127.0.0.1:5000/swagger
+- Thrift docs on http://127.0.0.1:5000/html
+
+## ENV parameters:
+
+### Status API server configuration
+
+| **Variable Name** | **Default Value** | **values**                                         | **Description**                                                   |
+|-------------------|-------------------|----------------------------------------------------|-------------------------------------------------------------------|
+| **LOG_LEVEL**     | info              | critical, fatal, error, warning, warn, info, debug | Level of logs: critical, fatal, error, warning, warn, info, debug |
+| **SERVER_HOST**   | 127.0.0.1         | 0.0.0.0 - 255.255.255.255                          | IP address the status server will listen to (0.0.0.0 is any ip).  |
+| **SERVER_PORT**   | 5000              | 1-65535                                            | Port the status server will listen to.                            |
+
+### Nats connection configuration
+
+| **Variable Name**    | **Default Value** | **values** | **Description**                                                                  |
+|----------------------|-------------------|------------|----------------------------------------------------------------------------------|
+| **NATS_URL**         | -                 | Url String | Nats connection url                                                              |
+| **NATS_USER**        | -                 | String     | Nats auth user name                                                              |
+| **NATS_PASS**        | -                 | String     | Nats auth password                                                               |
+| **NATS_TLS**         | False             | Bool       | Weather to use TLS when connecting to nats                                       |
+| **NATS_SUFFIX**      | 'default'         | string     | Nats unique subscription suffix, example: milvus.add.{suffix}                    |
+| **NATS_QUEUE_GROUP** | -                 | string     | Nats queue group name, usefully when running multiple copies of the same service |
+| **NATS_GRACE_TIME**  | 10                | Number     | Time to give the service to finish executing messages when exiting in seconds    |
+
+### Milvus connection configuration
+
+| **Variable Name**   | **Default Value** | **values**      | **Description**                                                |
+|---------------------|-------------------|-----------------|----------------------------------------------------------------|
+| **MILVUS_HOSTNAME** | -                 | hostname String | Milvus connection url                                          |
+| **MILVUS_PORT**     | 19530             | 1-65535         | Milvus connection port                                         |
+| **MILVUS_USERNAME** | -                 | String          | Milvus connection user name                                    |
+| **MILVUS_PASSWORD** | -                 | String          | Milvus connection password                                     |
+| **MILVUS_USE_TLS**  | False             | Bool            | Weather to use TLS when connecting to milvus                   |
+| **MILVUS_WORKERS**  | 2                 | Number          | Number of threads to run vectorization and milvus interactions |
+
+### Vectorizing configurations
+
+| **Variable Name**             | **Default Value** | **values** | **Description**                                |
+|-------------------------------|-------------------|------------|------------------------------------------------|
+| **VECTOR_SEGMENT_COLLECTION** | -                 | String     | Name of the collection                         |
+| **VECTOR_DIM**                | 768               | Number     | Number of dimentions in the vector collections |
+| **INDEX_USE_IVF_FLAT**        | False             | Bool       | Index collection using IVF_FLAT algorithm      |
+| **INDEX_USE_HNSW**            | False             | Bool       | Index collection using HNSW algorithm          |
+
+### Vectorizer model config
+
+| **Variable Name**             | **Default Value** | **values**                     | **Description**                                  |
+|-------------------------------|-------------------|--------------------------------|--------------------------------------------------|
+| **VECTOR_MODEL_PATH**         | -                 | String                         | Path of the Sentence Transformer model           |
+| **VECTOR_MODEL_CACHE_FOLDER** | -                 | String                         | Sentence Transformer cache folder                |
+| **VECTOR_MODEL_DEVICE**       | cpu               | cpu, cuda, cuda:0, auto etc... | Sentence Transformer model device                |
+| **HUGGING_FACE_AUTH_TOKEN**   | -                 | String                         | Hugging face token to download restricted models |
+
+### Nats tester config
+
+| **Variable Name**    | **Default Value** | **values** | **Description**                            |
+|----------------------|-------------------|------------|--------------------------------------------|
+| **NATS_TESTER_USER** | -                 | String     | Nats auth user name                        |
+| **NATS_TESTER_PASS** | -                 | String     | Nats auth password                         |
+| **NATS_TESTER_TLS**  | False             | Bool       | Weather to use TLS when connecting to nats |
+
+## Run locally
+
+- **Create Python Virtual Environment:**
+    - `python -m venv venv`
+- **Activate the virtual environment:**
+    - `source venv/bin/activate`
+- **Install required packages:**
+    - `pip3 install -r requirements.txt`
+- Create `.env` file based on `.env.example`
+    - Change the Model path and config then Run the server:
+        - `python3 main.py --multiprocess`
+
+Happy coding!
