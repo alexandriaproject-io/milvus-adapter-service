@@ -24,14 +24,24 @@ Milvus Adapter Service architecture:
     - [Vectorizer model config](#vectorizer-model-config)
     - [Nats tester config](#nats-tester-config)
 - [Run locally](#run-locally)
+- [Subscriptions](#subscriptions)
+    - [Thrift search request](#thrift-search-request)
+    - [Thrift search response](#thrift-search-response)
+    - [Thrift add message / request](#thrift-add-message--request)
+    - [Thrift add response](#thrift-add-response)
+    - [Thrift delete message / request](#thrift-delete-message--request)
+    - [Thrift delete response](#thrift-delete-response)
 
 ## Milvus Adapter Service Architecture
 
 ![Alt text](svgs/Milvus Adapter.drawio.svg)
 
-## Milvus Adapter Service Flow diagram
-
-TBD
+The Milvus Adapter service orchestrates operations involving data handling and text processing.
+It interfaces with a NATS Client to process search, addition, and deletion requests via respective controllers.
+The service employs Sentence Transformer Workers for advanced text encoding and decoding for accurate and efficient
+linguistic data management.
+Tasks are managed through an execution queue and the service is connected to the Milvus DB, ensuring streamlined
+operations and communication.
 
 ## Status API
 
@@ -117,4 +127,77 @@ Additionally, the service will expose swagger and Thrift object documentation at
     - Change the Model path and config then Run the server:
         - `python3 main.py --multiprocess`
 
-Happy coding!
+## Subscriptions
+
+### Thrift search request
+
+```thrift
+struct MilvusSegmentGetRequest {
+  1: string search;                         // Search text to find similar items for
+  2: optional list<string> document_ids,    // List of document IDs (plays partition role)
+  3: optional i16 offset;                   // how many responses to skip
+  4: optional i16 limit;                    // how many responses to return
+  5: optional i16 sf;                       // Search factor ( rf or nprobe depending on the index )
+}
+```
+
+### Thrift search response
+
+```thrift
+struct L2SegmentSearchResult {
+  1: double distance,               // Distance value
+  2: string document_id,            // document_id of the result
+  3: string section_id,             // section_id of the result
+  4: string segment_id              // segment_id of the result
+}
+
+struct L2SegmentSearchResponse {
+  1: list<L2SegmentSearchResult> results,   // List of results
+  2: i32 total                              // Results count
+  3: bool is_error                          // Is error or not
+  4: optional string error_text             // Error message text
+}
+```
+
+### Thrift add message / request
+
+```thrift
+struct MilvusSegmentUpsertPayload {
+  1: string segment_text;           // Text to vectorize and save
+  2: string document_id;            // Id of the document ( plays partition role )
+  3: string section_id;             // Id of the section
+  4: string segment_id;             // Id of the segment
+}
+```
+
+### Thrift add response
+
+```thrift
+struct L2SegmentUpsertResponse {
+    1: i32 insert_count             // Inserted segments
+    2: i32 update_count            // Updated segments
+    3: i32 delete_count             // Deleted segments
+    4: bool is_error                // Is error or not
+    5: optional string error_text   // Error message text
+}
+```
+
+### Thrift delete message / request
+
+```thrift
+struct MilvusSegmentDeletePayload {
+  2: string document_id;            // Id of the document ( plays partition role )
+  3: string section_id;             // Id of the section
+  4: string segment_id;             // Id of the segment
+}
+```
+
+### Thrift delete response
+
+```thrift
+struct L2SegmentDeleteResponse {
+    1: i32 delete_count             // Deleted segments
+    3: bool is_error                // Is error or not
+    4: optional string error_text   // Error message text
+}
+```
