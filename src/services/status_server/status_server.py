@@ -1,6 +1,7 @@
 from flask import Flask, send_from_directory, redirect, url_for
 from flask_restx import Api, Resource
 from src.logger import log
+from src.config import config
 
 app = Flask(__name__)
 api = Api(app, version='1.0', title='Milvus Adapter Service', description='Service health and stats', doc='/swagger')
@@ -48,12 +49,11 @@ def serve_html(filename):
 def run_flask_app(stats):
     global shared_stats
     shared_stats = stats
-    log.info("")
-    log.info(" * Liveness on http://127.0.0.1:5000/api/alive")
-    log.info(" * Readiness on http://127.0.0.1:5000/api/ready")
-    log.info(" * Stats on http://127.0.0.1:5000/api/stats")
-    log.info("")
-    log.info(" * Swagger docs on http://127.0.0.1:5000/swagger")
-    log.info(" * Thrift docs on http://127.0.0.1:5000/html")
-    log.info("")
-    app.run(host='0.0.0.0', port=5000, use_reloader=False, debug=False)
+    log.info(" * ***")
+    log.info(f" * Liveness on http://{config.STATUS_SERVER_HOST}:{config.STATUS_SERVER_PORT}/api/alive")
+    log.info(f" * Readiness on http://{config.STATUS_SERVER_HOST}:{config.STATUS_SERVER_PORT}/api/ready")
+    log.info(f" * Stats on http://{config.STATUS_SERVER_HOST}:{config.STATUS_SERVER_PORT}/api/stats")
+    log.info(f" * Swagger docs on http://{config.STATUS_SERVER_HOST}:{config.STATUS_SERVER_PORT}/swagger")
+    log.info(f" * Thrift docs on http://{config.STATUS_SERVER_HOST}:{config.STATUS_SERVER_PORT}/html")
+    log.info(" * ***")
+    app.run(host=config.STATUS_SERVER_HOST, port=config.STATUS_SERVER_PORT, use_reloader=False, debug=False)

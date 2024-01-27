@@ -100,12 +100,12 @@ Additionally, the service will expose swagger and Thrift object documentation at
 
 ### Vectorizer model config
 
-| **Variable Name**             | **Default Value** | **values**                     | **Description**                                  |
-|-------------------------------|-------------------|--------------------------------|--------------------------------------------------|
-| **VECTOR_MODEL_PATH**         | -                 | String                         | Path of the Sentence Transformer model           |
-| **VECTOR_MODEL_CACHE_FOLDER** | -                 | String                         | Sentence Transformer cache folder                |
-| **VECTOR_MODEL_DEVICE**       | cpu               | cpu, cuda, cuda:0, auto etc... | Sentence Transformer model device                |
-| **HUGGING_FACE_AUTH_TOKEN**   | -                 | String                         | Hugging face token to download restricted models |
+| **Variable Name**             | **Default Value** | **values**                                                                                                      | **Description**                                  |
+|-------------------------------|-------------------|-----------------------------------------------------------------------------------------------------------------|--------------------------------------------------|
+| **VECTOR_MODEL_PATH**         | -                 | String                                                                                                          | Path of the Sentence Transformer model           |
+| **VECTOR_MODEL_CACHE_FOLDER** | -                 | String                                                                                                          | Sentence Transformer cache folder                |
+| **VECTOR_MODEL_DEVICE**       | cpu               | cpu, cuda, ipu, xpu, mkldnn, opengl, opencl, ideep, hip, ve, fpga, ort, xla, lazy, vulkan, mps, meta, hpu, mtia | Sentence Transformer model device                |
+| **HUGGING_FACE_AUTH_TOKEN**   | -                 | String                                                                                                          | Hugging face token to download restricted models |
 
 ### Nats tester config
 
@@ -114,6 +114,22 @@ Additionally, the service will expose swagger and Thrift object documentation at
 | **NATS_TESTER_USER** | -                 | String     | Nats auth user name                        |
 | **NATS_TESTER_PASS** | -                 | String     | Nats auth password                         |
 | **NATS_TESTER_TLS**  | False             | Bool       | Weather to use TLS when connecting to nats |
+
+## Run with Docker
+
+`NOTE: The service is built to have external Milvus and Nats.io services`
+
+- With caching ( to avoid re-downloading Sentence transformer models )
+
+```
+docker run --env-file .env -v "[YOUR LOCAL CACHE FOLDER]:/cache" --name "milvus-adapter" niftylius/milvus-adapter
+```
+
+- Without caching enabled
+
+```
+docker run --env-file .env --name "milvus-adapter" niftylius/milvus-adapter
+```
 
 ## Run locally
 

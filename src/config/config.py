@@ -7,8 +7,8 @@ load_dotenv()
 LOG_LEVEL = os.getenv("LOG_LEVEL", "info")
 
 # Rest API server configuration
-STATUS_SERVER_HOST = os.getenv("SERVER_HOST", "127.0.0.1")
-STATUS_SERVER_PORT = int(os.getenv("SERVER_PORT", "5050"))
+STATUS_SERVER_HOST = os.getenv("STATUS_SERVER_HOST", "0.0.0.0")
+STATUS_SERVER_PORT = int(os.getenv("STATUS_SERVER_PORT", "5000"))
 
 # Nats connection configuration
 NATS_URL = os.getenv("NATS_URL", "")
