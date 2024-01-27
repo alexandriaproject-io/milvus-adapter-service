@@ -1,0 +1,49 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  docker-build-and-push:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Add SHORT_SHA to env
+        run: echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-10`" >> $GITHUB_ENV
+
+      - name: Log in to Docker Hub
+        run: echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USER }} --password-stdin
+
+      - name: Build Docker image
+        working-directory: .
+        env:
+          IMAGE_NAME: ${{ secrets.DOCKERHUB_USER }}/${{ vars.IMAGE_NAME }}:${{ env.SHORT_SHA }}
+        run: |
+          docker build --network host -t "$IMAGE_NAME" .
+
+      - name: Push Docker image to Docker Hub
+        working-directory: .
+        env:
+          IMAGE_NAME: ${{ secrets.DOCKERHUB_USER }}/${{ vars.IMAGE_NAME }}:${{ env.SHORT_SHA }}
+        run: |
+          docker push $IMAGE_NAME
+
+  deploy:
+    needs: docker-build-and-push
+    runs-on: self-hosted
+    steps:
+      - name: install kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Add SHORT_SHA to env
+        run: echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-10`" >> $GITHUB_ENV
+
+      - name: Update Deployment Image
+        env:
+          IMAGE_NAME: ${{ secrets.DOCKERHUB_USER }}/${{ vars.IMAGE_NAME }}:${{ env.SHORT_SHA }}
+        run: |
+          kubectl set image deployment/${{ vars.SERVICE_NAME }} ${{ vars.SERVICE_NAME }}=$IMAGE_NAME -n services
