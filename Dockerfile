@@ -1,10 +1,10 @@
-FROM python:3.10-slim
+FROM pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime
 
 # Install system dependencies
 RUN apt-get update
 
-# Install PyTorch
-RUN pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+# Install PyTorch manually
+# RUN pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 
 # Create a cache directory
 RUN mkdir ./cache
