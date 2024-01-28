@@ -35,9 +35,9 @@ jobs:
       - name: Push Docker image to Docker Hub
         working-directory: .
         env:
-          IMAGE_NAME: ${{ secrets.DOCKERHUB_USER }}/${{ vars.IMAGE_NAME }}:${{ env.SHORT_SHA }}
+          IMAGE_NAME: ${{ secrets.DOCKERHUB_USER }}/${{ vars.IMAGE_NAME }}
         run: |
-          docker push $IMAGE_NAME
+          docker push --all-tags "$IMAGE_NAME"
 
   deploy:
     needs: docker-build-and-push
