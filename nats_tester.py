@@ -76,6 +76,7 @@ async def main():
         record = thrift_read(response.data, L2SegmentUpsertResponse)
         print(record)
 
+        time.sleep(3)
         ##############################################
         ##############################################
         ##############################################
