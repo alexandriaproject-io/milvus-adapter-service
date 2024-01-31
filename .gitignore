@@ -1,6 +1,6 @@
 # milvus programatic user management
 milvus_users.py
-
+nats_tester.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
