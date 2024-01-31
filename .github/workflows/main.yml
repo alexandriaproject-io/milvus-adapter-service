@@ -53,4 +53,8 @@ jobs:
         env:
           IMAGE_NAME: ${{ secrets.DOCKERHUB_USER }}/${{ vars.IMAGE_NAME }}:${{ env.SHORT_SHA }}
         run: |
-          kubectl set image deployment/${{ vars.SERVICE_NAME }} ${{ vars.SERVICE_NAME }}=$IMAGE_NAME -n services
+          for service in ${{ vars.SERVICE_NAMES }}
+          do
+            kubectl set image deployment/$service $service=$IMAGE_NAME -n services
+          done
+           

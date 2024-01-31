@@ -62,31 +62,20 @@ async def subscribe_nats_routes(js, nc, routes, help_health, recreate_js=False):
     for route in routes:
         if route.get("jetstream", False):
             queues.append(f"{js_queue_group}-{route['route']}")
-            js_subjects += [
-                f"milvus.js.{route['route']}",
-                f"milvus.js.{route['route']}.{config.NATS_SUFFIX}"
-            ]
-            js_routes += [
-                {"subject": f"milvus.js.{route['route']}",
-                 "queue": f"{js_queue_group}-{route['route']}",
-                 "handler": route["handler"]},
-                {"subject": f"milvus.js.{route['route']}.{config.NATS_SUFFIX}",
-                 "queue": f"{js_queue_group}-{route['route']}",
-                 "handler": route["handler"]}
-            ]
+            js_subjects.append(f"milvus.js.{route['route']}.{config.NATS_SUFFIX}")
+            js_routes.append({
+                "subject": f"milvus.js.{route['route']}.{config.NATS_SUFFIX}",
+                "queue": f"{js_queue_group}-{route['route']}",
+                "handler": route["handler"]
+            })
+
         queues.append(f"{nc_queue_group}-{route['route']}")
-        ns_subjects += [
-            f"milvus.{route['route']}",
-            f"milvus.{route['route']}.{config.NATS_SUFFIX}",
-        ]
-        nc_routes += [
-            {"subject": f"milvus.{route['route']}",
-             "queue": f"{nc_queue_group}-{route['route']}",
-             "handler": route["handler"]},
-            {"subject": f"milvus.{route['route']}.{config.NATS_SUFFIX}",
-             "queue": f"{nc_queue_group}-{route['route']}",
-             "handler": route["handler"]}
-        ]
+        ns_subjects.append(f"milvus.{route['route']}.{config.NATS_SUFFIX}", )
+        nc_routes.append({
+            "subject": f"milvus.{route['route']}.{config.NATS_SUFFIX}",
+            "queue": f"{nc_queue_group}-{route['route']}",
+            "handler": route["handler"]
+        })
 
     log.info(f"Process Nats queues: {sorted(queues)}")
     log.info(f"Listening to Nats subjects: {sorted(ns_subjects)}")
