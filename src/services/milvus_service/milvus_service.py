@@ -8,7 +8,7 @@ from src.services.milvus_service.milvus_db import (
     milvus_define_collections,
     upsert_segment,
     search_segments,
-    delete_segment
+    delete_segment,
 )
 
 
@@ -55,31 +55,48 @@ def start_milvus_service(stats, task_queue, milvus_ready_event, worker_id):
             result = {"error": f"Unknown message type {msg_type}"}
             if msg_type == "upsert":
                 segment = task.get("query", {})
-                vectors = vectorizer.embed_text(segment.get("text", "Unknown")).cpu().numpy()
-                result = upsert_segment(
-                    document_id=segment.get("document_id", None),
-                    section_id=segment.get("section_id", None),
-                    segment_id=segment.get("segment_id", None),
-                    vectors=vectors
-                )
+                upsert_string = segment.get("text", None)
+                document_id = segment.get("document_id", None)
+                section_id = segment.get("section_id", None)
+                segment_id = segment.get("segment_id", None)
+                if upsert_string and document_id and section_id and segment_id:
+                    vectors = vectorizer.embed_text(upsert_string).cpu().numpy()
+                    result = upsert_segment(
+                        document_id=document_id,
+                        section_id=section_id,
+                        segment_id=segment_id,
+                        vectors=vectors)
+                else:
+                    future.set_result({"error": f"Invalid upsert params {segment}"})
             elif msg_type == "search":
                 query = task.get("query", {})
-                vectors = vectorizer.embed_text(query.get("search", "Unknown")).cpu().numpy()
-                result = search_segments(
-                    query_vectors=vectors,
-                    document_ids=query.get("document_ids", None),
-                    offset=query.get("offset", None),
-                    limit=query.get("limit", None),
-                    sf=query.get("sf", None),
-                )
+                search_string = query.get("search", None)
+                if search_string:
+                    vectors = vectorizer.embed_text(search_string).cpu().numpy()
+                    result = search_segments(
+                        query_vectors=vectors,
+                        document_ids=query.get("document_ids", None),
+                        offset=query.get("offset", None),
+                        limit=query.get("limit") or 100,
+                        sf=query.get("sf") or 32)
+                else:
+                    future.set_result({"error": f"Invalid search params {query}"})
             elif msg_type == "delete":
                 query = task.get("query", {})
-                result = delete_segment(
-                    document_id=query.get("document_id", None),
-                    section_id=query.get("section_id", None),
-                    segment_id=query.get("segment_id", None),
-                )
+                document_id = query.get("document_id", None)
+                section_id = query.get("section_id", None)
+                segment_id = query.get("segment_id", None)
+                if document_id and section_id and segment_id:
+                    result = delete_segment(
+                        document_id=document_id,
+                        section_id=section_id,
+                        segment_id=segment_id)
+                else:
+                    future.set_result({"error": f"Invalid delete params {query}"})
+            else:
+                future.set_result({"error": f"Unknown message type: {msg_type}"})
             log.debug(f"Worker #{worker_id}: Task finished in {time.perf_counter() - start}s")
             future.set_result(result)
         except Exception as e:
-            future.set_result({"error": f"Unknown message type: {e}"})
+            log.warn(f"Execution error: {e}")
+            future.set_result({"error": f"Execution error: {e}"})
