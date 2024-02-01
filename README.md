@@ -15,6 +15,8 @@ Milvus Adapter Service architecture:
 
 - [Milvus Adapter Service Architecture](#milvus-adapter-service-architecture)
 - [Milvus Adapter Service Flow diagram](#milvus-adapter-service-flow-diagram)
+- [Rest API](#rest-api-server)
+    - [Rest API Endpoints](#rest-api-endpoints)
 - [Status API](#status-api)
 - [ENV parameters](#env-parameters)
     - [Status API server configuration](#status-api-server-configuration)
@@ -42,6 +44,13 @@ The service employs Sentence Transformer Workers for advanced text encoding and 
 linguistic data management.
 Tasks are managed through an execution queue and the service is connected to the Milvus DB, ensuring streamlined
 operations and communication.
+
+## Rest API Server
+
+When enabled will listen to Rest API requests ( without thrift encoding ):
+
+- Rest API Swagger docs on http://127.0.0.1:5050/swagger
+- Rest API will listen on  http://127.0.0.1:5050/api
 
 ## Status API
 
@@ -152,6 +161,52 @@ docker run --env-file .env --name "milvus-adapter" niftylius/milvus-adapter
     - Change the Model path and config then Run the server:
         - `python3 main.py --multiprocess`
 
+## Rest API Endpoints
+
+### POST /api/search
+
+Will return a vector search based on the payload parameters
+
+Payload:
+
+```json
+{
+  "search": "string",
+  // *Required: Search text to find similar items for
+  "document_ids": [
+    "string"
+  ],
+  // *Optional: List of document IDs (plays partition role)
+  "offset": 0,
+  // *Optional: how many responses to skip
+  "limit": 0,
+  // *Optional: how many responses to return
+  "sf": 0
+  // *Optional: Search factor ( rf or nprobe depending on the index )
+}
+```
+
+Response:
+
+```json
+{
+  "result_items": 0,
+  // Results count
+  "results": [
+    {
+      "distance": 0,
+      // Distance value
+      "document_id": "string",
+      // document_id of the result
+      "section_id": "string",
+      // section_id of the result
+      "segment_id": "string"
+      // section_id of the result
+    }
+  ]
+}
+```
+
 ## Subscriptions
 
 ### Thrift search request
@@ -173,7 +228,7 @@ struct L2SegmentSearchResult {
   1: double distance,               // Distance value
   2: string document_id,            // document_id of the result
   3: string section_id,             // section_id of the result
-  4: string segment_id              // segment_id of the result
+  4: string segment_id              // section_id of the result
 }
 
 struct L2SegmentSearchResponse {
