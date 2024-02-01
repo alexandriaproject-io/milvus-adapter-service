@@ -26,6 +26,7 @@ Milvus Adapter Service architecture:
     - [Vectorizer model config](#vectorizer-model-config)
     - [Nats tester config](#nats-tester-config)
 - [Run locally](#run-locally)
+- [Run in Docker](#run-in-docker)
 - [Subscriptions](#subscriptions)
     - [Thrift search request](#thrift-search-request)
     - [Thrift search response](#thrift-search-response)
@@ -160,6 +161,14 @@ docker run --env-file .env --name "milvus-adapter" niftylius/milvus-adapter
 - Create `.env` file based on `.env.example`
     - Change the Model path and config then Run the server:
         - `python3 main.py --multiprocess`
+
+## Run in Docker
+You can also run the service in a docker, but make sure you copy the .env.example file and add your milvus db configurations \
+`NOTE: The example contains NATS.io - it uses Trhift for messages`
+
+```shell
+
+```
 
 ## Rest API Endpoints
 
