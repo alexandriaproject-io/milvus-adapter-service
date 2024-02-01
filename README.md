@@ -58,7 +58,7 @@ Additionally, the service will expose swagger and Thrift object documentation at
 
 ## ENV parameters:
 
-### Status API server configuration
+### Status server configuration
 
 | **Variable Name** | **Default Value** | **values**                                         | **Description**                                                   |
 |-------------------|-------------------|----------------------------------------------------|-------------------------------------------------------------------|
@@ -66,10 +66,19 @@ Additionally, the service will expose swagger and Thrift object documentation at
 | **SERVER_HOST**   | 127.0.0.1         | 0.0.0.0 - 255.255.255.255                          | IP address the status server will listen to (0.0.0.0 is any ip).  |
 | **SERVER_PORT**   | 5000              | 1-65535                                            | Port the status server will listen to.                            |
 
+### Rest API server configuration
+
+| **Variable Name**      | **Default Value** | **values**                | **Description**                                                    |
+|------------------------|-------------------|---------------------------|--------------------------------------------------------------------|
+| **API_SERVER_ENABLED** | false             | Bool                      | Weather to enable REST Api server or not                           |
+| **API_SERVER_HOST**    | 127.0.0.1         | 0.0.0.0 - 255.255.255.255 | IP address the REST Api server will listen to (0.0.0.0 is any ip). |
+| **API_SERVER_PORT**    | 5000              | 1-65535                   | Port the REST Api server will listen to.                           |
+
 ### Nats connection configuration
 
 | **Variable Name**    | **Default Value** | **values** | **Description**                                                                  |
 |----------------------|-------------------|------------|----------------------------------------------------------------------------------|
+| **NATS_ENABLED**     | true              | Bool       | Weather to enable Nats client or not                                             |
 | **NATS_URL**         | -                 | Url String | Nats connection url                                                              |
 | **NATS_USER**        | -                 | String     | Nats auth user name                                                              |
 | **NATS_PASS**        | -                 | String     | Nats auth password                                                               |
