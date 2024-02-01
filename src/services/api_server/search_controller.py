@@ -10,8 +10,8 @@ class MilvusSegmentGetRequest(BaseModel):
     search: str
     document_ids: Optional[List[str]] = None
     offset: Optional[int] = Field(None)
-    limit: Optional[int] = Field(None)
-    sf: Optional[int] = None
+    limit: Optional[int] = Field(None, examples=[100])
+    sf: Optional[int] = Field(None, examples=[32])
 
 
 class SearchResultItem(BaseModel):

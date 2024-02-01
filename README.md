@@ -207,6 +207,39 @@ Response:
 }
 ```
 
+## POST /api/upsert
+
+Will add or update a new vector row/item
+Payload:
+
+```json
+{
+  "segment_text": "string",
+  // Text to vectorize and save
+  "document_id": "string",
+  // Text to vectorize and save
+  "section_id": "string",
+  // Id of the section
+  "segment_id": "string"
+  // Id of the segment
+}
+```
+
+Response:
+
+```json
+{
+  "insert_count": 1,
+  // Inserted segments
+  "upsert_count": 1,
+  // Updated segments
+  "delete_count": 1
+  // Deleted segments
+}
+```
+
+`NOTE: For some reason they all return as 1 due to an issue with milvus library`
+
 ## Subscriptions
 
 ### Thrift search request
