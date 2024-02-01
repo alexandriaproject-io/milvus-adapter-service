@@ -87,7 +87,7 @@ Additionally, the service will expose swagger and Thrift object documentation at
 
 | **Variable Name**    | **Default Value** | **values** | **Description**                                                                  |
 |----------------------|-------------------|------------|----------------------------------------------------------------------------------|
-| **NATS_ENABLED**     | true              | Bool       | Weather to enable Nats client or not                                             |
+| **NATS_ENABLED**     | false             | Bool       | Weather to enable Nats client or not                                             |
 | **NATS_URL**         | -                 | Url String | Nats connection url                                                              |
 | **NATS_USER**        | -                 | String     | Nats auth user name                                                              |
 | **NATS_PASS**        | -                 | String     | Nats auth password                                                               |

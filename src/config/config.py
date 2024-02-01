@@ -16,7 +16,7 @@ API_SERVER_HOST = os.getenv("API_SERVER_HOST", "0.0.0.0")
 API_SERVER_PORT = int(os.getenv("API_SERVER_PORT", "5050"))
 
 # Nats connection configuration
-NATS_ENABLED = os.getenv("NATS_ENABLED", "true").lower() == 'true'
+NATS_ENABLED = os.getenv("NATS_ENABLED", "false").lower() == 'true'
 NATS_URL = os.getenv("NATS_URL", "")
 NATS_USER = os.getenv("NATS_USER", "")
 NATS_PASS = os.getenv("NATS_PASS", "")
