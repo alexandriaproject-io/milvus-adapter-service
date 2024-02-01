@@ -1,4 +1,4 @@
-from flask import Flask, send_from_directory, redirect, url_for
+from flask import Flask, send_from_directory, redirect, url_for, jsonify
 from flask_restx import Api, Resource
 from src.logger import log
 from src.config import config
@@ -50,10 +50,14 @@ def run_flask_app(stats):
     global shared_stats
     shared_stats = stats
     log.info(" * ***")
-    log.info(f" * Liveness on http://{config.STATUS_SERVER_HOST}:{config.STATUS_SERVER_PORT}/api/alive")
-    log.info(f" * Readiness on http://{config.STATUS_SERVER_HOST}:{config.STATUS_SERVER_PORT}/api/ready")
-    log.info(f" * Stats on http://{config.STATUS_SERVER_HOST}:{config.STATUS_SERVER_PORT}/api/stats")
-    log.info(f" * Swagger docs on http://{config.STATUS_SERVER_HOST}:{config.STATUS_SERVER_PORT}/swagger")
-    log.info(f" * Thrift docs on http://{config.STATUS_SERVER_HOST}:{config.STATUS_SERVER_PORT}/html")
+    log.info(f" * Liveness on       http://{config.STATUS_SERVER_HOST}:{config.STATUS_SERVER_PORT}/api/alive")
+    log.info(f" * Readiness on      http://{config.STATUS_SERVER_HOST}:{config.STATUS_SERVER_PORT}/api/ready")
+    log.info(f" * Stats on          http://{config.STATUS_SERVER_HOST}:{config.STATUS_SERVER_PORT}/api/stats")
+    log.info(f" * Status docs on    http://{config.STATUS_SERVER_HOST}:{config.STATUS_SERVER_PORT}/swagger")
+    log.info(f" * Thrift docs on    http://{config.STATUS_SERVER_HOST}:{config.STATUS_SERVER_PORT}/html")
     log.info(" * ***")
+    if config.API_SERVER_ENABLED:
+        log.info(f" * API Swagger on    http://{config.API_SERVER_HOST}:{config.API_SERVER_PORT}/swagger")
+        log.info(f" * Rest API on       http://{config.API_SERVER_HOST}:{config.API_SERVER_PORT}/api")
+        log.info(" * ***")
     app.run(host=config.STATUS_SERVER_HOST, port=config.STATUS_SERVER_PORT, use_reloader=False, debug=False)
