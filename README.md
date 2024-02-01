@@ -167,7 +167,11 @@ You can also run the service in a docker, but make sure you copy the .env.exampl
 `NOTE: The example contains NATS.io - it uses Trhift for messages`
 
 ```shell
+docker run --name test_container -p 5050:5050 -p 4040:4040 --env-file .env.example niftylius/milvus-adapter
 
+# to run detached add -d after the `run` command
+# Status swagger: http://127.0.0.1:5050/swagger
+# Rest API swagger: http://127.0.0.1:4040/swagger
 ```
 
 ## Rest API Endpoints
