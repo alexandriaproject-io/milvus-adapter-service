@@ -210,6 +210,7 @@ Response:
 ## POST /api/upsert
 
 Will add or update a new vector row/item
+
 Payload:
 
 ```json
@@ -217,7 +218,7 @@ Payload:
   "segment_text": "string",
   // Text to vectorize and save
   "document_id": "string",
-  // Text to vectorize and save
+  // Id of the document ( plays partition role )
   "section_id": "string",
   // Id of the section
   "segment_id": "string"
@@ -239,6 +240,33 @@ Response:
 ```
 
 `NOTE: For some reason they all return as 1 due to an issue with milvus library`
+
+### POST /api/delete
+
+The endpoint will delete the requested vector \
+`Warning: Deleting vectors can cause lag spikes and temporary performance slowdowns`
+
+Payload:
+
+```json
+{
+  "document_id": "string",
+  // Id of the document ( plays partition role )
+  "section_id": "string",
+  // Id of the section
+  "segment_id": "string"
+  // Id of the segment
+}
+```
+
+Response:
+
+```json
+{
+  "delete_count": 1
+  // Deleted segments
+}
+```
 
 ## Subscriptions
 

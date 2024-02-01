@@ -6,7 +6,7 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 
 
-class MilvusSegmentGetRequest(BaseModel):
+class SearchRequest(BaseModel):
     search: str
     document_ids: Optional[List[str]] = None
     offset: Optional[int] = Field(None)
@@ -83,7 +83,7 @@ async def handle_search(data, execution_queue):
             "segment_id": ids[2] if len(ids) > 2 else '',
         })
 
-    log.debug(f"handle_get_future execution time: {time.perf_counter() - start}")
+    log.debug(f"handle_search_future execution time: {time.perf_counter() - start}")
     return {
         "result_items": len(results),
         "results": results

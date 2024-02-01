@@ -5,23 +5,20 @@ from fastapi import HTTPException
 from pydantic import BaseModel
 
 
-class UpsertRequest(BaseModel):
-    segment_text: str
+class DeleteRequest(BaseModel):
     document_id: str
     section_id: str
     segment_id: str
 
 
-class UpsertResponse(BaseModel):
-    insert_count: int
-    upsert_count: int
+class DeleteResponse(BaseModel):
     delete_count: int
 
 
-def validate_milvus_segment_upsert_payload(data):
+def validate_milvus_segment_delete_payload(data):
     errors = []
 
-    required_fields = ['segment_text', 'document_id', 'section_id', 'segment_id']
+    required_fields = ['document_id', 'section_id', 'segment_id']
     for field in required_fields:
         if field not in data:
             errors.append(f'{field} field is required')
@@ -32,18 +29,17 @@ def validate_milvus_segment_upsert_payload(data):
     return errors
 
 
-async def handle_upsert(data, execution_queue):
-    log.debug(f"Entered handle_upsert()")
-    errors = validate_milvus_segment_upsert_payload(data)
+async def handle_delete(data, execution_queue):
+    log.debug(f"Entered handle_delete()")
+    errors = validate_milvus_segment_delete_payload(data)
     if errors:
         raise HTTPException(status_code=400, detail={"errors": errors})
 
     start = time.perf_counter()
     future = asyncio.Future()
     execution_queue.put(({
-                             "msg_type": "upsert",
+                             "msg_type": "delete",
                              "query": {
-                                 "text": data.get("segment_text"),
                                  "document_id": data.get("document_id"),
                                  "section_id": data.get("section_id"),
                                  "segment_id": data.get("segment_id"),
@@ -53,9 +49,7 @@ async def handle_upsert(data, execution_queue):
     if response.get("error", None):
         raise HTTPException(status_code=500, detail={"error": response.get("error", "Unknown error")})
 
-    log.debug(f"handle_upsert_future execution time: {time.perf_counter() - start}")
+    log.debug(f"handle_delete_future execution time: {time.perf_counter() - start}")
     return {
-        "insert_count": response.get("insert_count", 0),
-        "upsert_count": response.get("upsert_count", 0),
         "delete_count": response.get("delete_count", 0),
     }
