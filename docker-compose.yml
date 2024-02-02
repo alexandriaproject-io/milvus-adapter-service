@@ -115,8 +115,6 @@ services:
       retries: 3
     command: >
       /bin/sh -c "
-      apt-get update;
-      apt-get install curl -y;
       echo 'Waiting for Milvus to be ready...';
       until [ \"$(curl -s milvus:9091/healthz)\" = \"OK\" ]; do
         echo 'Waiting for Milvus server...';
