@@ -11,6 +11,7 @@ from src.services.api_server import api_server
 
 if __name__ == '__main__':
     execution_queue = queue.Queue()
+    startup_queue = queue.Queue()
     shared_stats = {
         "nats-ready": not config.NATS_ENABLED,
         "nats-alive": not config.NATS_ENABLED,
@@ -18,17 +19,26 @@ if __name__ == '__main__':
         "milvus-alive": False
     }
 
+
+    def shutdown_services(servie_name):
+        log.error(f"Service{servie_name} requested shutdown")
+        exit(1)
+
+
     for i in range(config.MILVUS_WORKERS):
         log.info(f"Starting Milvus worker #{i + 1}")
         milvus_ready_event = threading.Event()
         milvus_thread = threading.Thread(
             target=milvus_service.start_milvus_service,
-            args=(shared_stats, execution_queue, milvus_ready_event, i,),
+            args=(shared_stats, execution_queue, startup_queue, shutdown_services, i,),
             daemon=True
         )
         milvus_thread.start()
         log.info(f"Waiting for Milvus worker #{i + 1} to be ready")
-        milvus_ready_event.wait()
+        thread_status = startup_queue.get()
+        if not thread_status.get("success", False):
+            log.error(thread_status.get("error", "Unknown error"))
+            exit(1)
 
     if config.NATS_ENABLED:
         # Run the NATS client asynchronously

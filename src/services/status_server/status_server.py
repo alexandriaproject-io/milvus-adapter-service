@@ -11,15 +11,23 @@ ns = api.namespace('api', description='Service health and stats')
 @ns.route('/ready')
 class Ready(Resource):
     def get(self):
-        # Implement readiness check logic here
-        return {'status': 'ready'}, 200
+        global shared_stats
+        # Check both conditions; if any is False, report not ready
+        if not shared_stats.get("nats-ready", True) or not shared_stats.get("milvus-ready", True):
+            return {'error': 'Service is not alive'}, 500
+        else:
+            return {'status': 'ready'}, 200
 
 
 @ns.route('/alive')
 class Alive(Resource):
     def get(self):
-        # Implement liveness check logic here
-        return {'status': 'alive'}, 200
+        global shared_stats
+        # Check both conditions; if any is False, report not alive
+        if not shared_stats.get("nats-alive", True) or not shared_stats.get("milvus-alive", True):
+            return {'error': 'Service is not alive'}, 500
+        else:
+            return {'status': 'alive'}, 200
 
 
 @ns.route('/stats')

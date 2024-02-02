@@ -1,3 +1,4 @@
+import sys
 import time
 from src.logger import log
 from src.config import config
@@ -12,7 +13,7 @@ from src.services.milvus_service.milvus_db import (
 )
 
 
-def start_milvus_service(stats, task_queue, milvus_ready_event, worker_id):
+def start_milvus_service(stats, task_queue, startup_queue, shutdown, worker_id):
     global shared_stats
     global vectorizer
     shared_stats = stats
@@ -26,11 +27,16 @@ def start_milvus_service(stats, task_queue, milvus_ready_event, worker_id):
     vectorizer.load_model()
 
     log.info(f"Worker #{worker_id}: Connecting to Milvus...")
-    milvus_connect()
+    try:
+        milvus_connect()
+    except Exception as e:
+        startup_queue.put({"success": False, "error": f"{e}"})
+        exit(0)
+
     log.info(f"Worker #{worker_id}: Verifying collections")
     milvus_define_collections()
 
-    milvus_ready_event.set()
+    startup_queue.put({"success": True, "error": ""})
     shared_stats["milvus-ready"] = True
     shared_stats["milvus-alive"] = True
     while True:
