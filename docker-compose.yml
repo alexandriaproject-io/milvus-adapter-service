@@ -1,0 +1,138 @@
+version: '3.5'
+
+services:
+  etcd:
+    container_name: milvus-srv-etcd
+    image: quay.io/coreos/etcd:v3.5.5
+    environment:
+      - ETCD_AUTO_COMPACTION_MODE=revision
+      - ETCD_AUTO_COMPACTION_RETENTION=1000
+      - ETCD_QUOTA_BACKEND_BYTES=4294967296
+      - ETCD_SNAPSHOT_COUNT=50000
+    volumes:
+      - ./milvus_data/etcd:/etcd
+    command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
+    healthcheck:
+      test: [ "CMD", "etcdctl", "endpoint", "health" ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  minio:
+    container_name: milvus-srv-minio
+    image: minio/minio:RELEASE.2023-03-20T20-16-18Z
+    environment:
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+    ports:
+      - "9001:9001"
+      - "9000:9000"
+    volumes:
+      - ./milvus_data/minio:/minio_data
+    command: minio server /minio_data --console-address ":9001"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  milvus:
+    container_name: milvus-srv-standalone
+    image: milvusdb/milvus:v2.3.1
+    command: [ "milvus", "run", "standalone" ]
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      ETCD_ENDPOINTS: etcd:2379
+      MINIO_ADDRESS: minio:9000
+      MILVUS_DB_USERNAME: milvus-user
+      MILVUS_DB_PASSWORD: milvus-password
+    volumes:
+      - ./milvus_data/milvus:/var/lib/milvus
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9091/healthz" ]
+      interval: 30s
+      start_period: 90s
+      timeout: 20s
+      retries: 3
+    ports:
+      - "19530:19530"
+      - "9091:9091"
+    depends_on:
+      - "etcd"
+      - "minio"
+
+
+
+
+  adapter:
+    container_name: milvus-adapter-srv
+    image: niftylius/milvus-adapter:latest
+    environment:
+      # Status server configuration
+      LOG_LEVEL: debug
+      STATUS_SERVER_HOST: 0.0.0.0
+      STATUS_SERVER_PORT: 4040
+      # Rest API server configuration
+      API_SERVER_ENABLED: true
+      API_SERVER_HOST: 0.0.0.0
+      API_SERVER_PORT: 5050
+      # Nats connection configuration
+      # NATS_ENABLED=true
+      # NATS_URL=nats://nats.internal.niftylius.com:4222
+      # NATS_USER=milvus_adapter
+      # NATS_PASS=4a00641f-9879-4d17-b144-35d0af06bf60
+      # NATS_TLS=false
+      # NATS_SUFFIX=default
+      # NATS_QUEUE_GROUP=local
+      # NATS_GRACE_TIME=1
+      # Milvus connection configuration
+      MILVUS_HOSTNAME: milvus
+      MILVUS_PORT: 19530
+      MILVUS_USERNAME: milvus-user
+      MILVUS_PASSWORD: milvus-password
+      MILVUS_USE_TLS: false
+      MILVUS_WORKERS: 1
+      # Vectorizing configurations
+      VECTOR_SEGMENT_COLLECTION: segment_vectors
+      VECTOR_DIM: 768
+      INDEX_USE_IVF_FLAT: false
+      INDEX_USE_HNSW: true
+      # Vectorizer model config
+      VECTOR_MODEL_PATH: paraphrase-distilroberta-base-v2
+      VECTOR_MODEL_DEVICE: cpu
+      VECTOR_MODEL_CACHE_FOLDER: ./cache
+      HUGGING_FACE_AUTH_TOKEN:
+    volumes:
+      - ./cache:/workspace/cache # Maps ./cache on your host to /cache in the container
+    ports:
+      - "4040:4040"
+      - "5050:5050"
+    depends_on:
+      - "milvus"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:4040/api/alive" ]
+      interval: 30s
+      start_period: 90s
+      timeout: 20s
+      retries: 3
+    command: >
+      /bin/sh -c "
+      apt-get update;
+      apt-get install curl -y;
+      echo 'Waiting for Milvus to be ready...';
+      until [ \"$(curl -s milvus:9091/healthz)\" = \"OK\" ]; do
+        echo 'Waiting for Milvus server...';
+        sleep 1;
+      done;
+      echo 'Milvus is up and running!';
+      sleep 1;
+      python3 /workspace/main.py
+      "
+
+
+networks:
+  default:
+    name: milvus-adapter
+
+

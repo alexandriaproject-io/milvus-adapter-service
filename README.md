@@ -27,6 +27,7 @@ Milvus Adapter Service architecture:
     - [Nats tester config](#nats-tester-config)
 - [Run locally](#run-locally)
 - [Run in Docker](#run-in-docker)
+    - [Run with **docker-compose**](#run-with-docker-compose)
 - [Subscriptions](#subscriptions)
     - [Thrift search request](#thrift-search-request)
     - [Thrift search response](#thrift-search-response)
@@ -99,14 +100,15 @@ Additionally, the service will expose swagger and Thrift object documentation at
 
 ### Milvus connection configuration
 
-| **Variable Name**   | **Default Value** | **values**      | **Description**                                                |
-|---------------------|-------------------|-----------------|----------------------------------------------------------------|
-| **MILVUS_HOSTNAME** | -                 | hostname String | Milvus connection url                                          |
-| **MILVUS_PORT**     | 19530             | 1-65535         | Milvus connection port                                         |
-| **MILVUS_USERNAME** | -                 | String          | Milvus connection user name                                    |
-| **MILVUS_PASSWORD** | -                 | String          | Milvus connection password                                     |
-| **MILVUS_USE_TLS**  | False             | Bool            | Weather to use TLS when connecting to milvus                   |
-| **MILVUS_WORKERS**  | 2                 | Number          | Number of threads to run vectorization and milvus interactions |
+| **Variable Name**         | **Default Value** | **values**      | **Description**                                                |
+|---------------------------|-------------------|-----------------|----------------------------------------------------------------|
+| **MILVUS_HOSTNAME**       | -                 | hostname String | Milvus connection url                                          |
+| **MILVUS_PORT**           | 19530             | 1-65535         | Milvus connection port                                         |
+| **MILVUS_USERNAME**       | -                 | String          | Milvus connection user name                                    |
+| **MILVUS_PASSWORD**       | -                 | String          | Milvus connection password                                     |
+| **MILVUS_USE_TLS**        | False             | Bool            | Weather to use TLS when connecting to milvus                   |
+| **MILVUS_WORKERS**        | 2                 | Number          | Number of threads to run vectorization and milvus interactions |
+| **MILVUS_NUM_PARTITIONS** | 64                | 1-4096          | Number of desired partitions in the collection                 |
 
 ### Vectorizing configurations
 
@@ -163,16 +165,41 @@ docker run --env-file .env --name "milvus-adapter" niftylius/milvus-adapter
         - `python3 main.py --multiprocess`
 
 ## Run in Docker
-You can also run the service in a docker, but make sure you copy the .env.example file and add your milvus db configurations \
+
+You can also run the service in a docker, but make sure you copy the .env.example file and add your milvus db
+configurations \
 `NOTE: The example contains NATS.io - it uses Trhift for messages`
 
 ```shell
+# run milvus adapter docker (to run detached add -d after the `run` command )
 docker run --name test_container -p 5050:5050 -p 4040:4040 --env-file .env.example niftylius/milvus-adapter
 
-# to run detached add -d after the `run` command
 # Status swagger: http://127.0.0.1:5050/swagger
 # Rest API swagger: http://127.0.0.1:4040/swagger
 ```
+
+## Run with docker-compose
+
+Docker compose will start milvus database server as well as milvus adapter \
+to run download docker-compose.yml from\
+https://raw.githubusercontent.com/alexandriaproject-io/milvus-adapter-service/main/docker-compose.yml
+
+```shell
+# download docker-compose.yml with curl
+curl https://raw.githubusercontent.com/alexandriaproject-io/milvus-adapter-service/main/docker-compose.yml -o docker-compose.yml
+
+# download docker-compose.yml with wget
+wget https://raw.githubusercontent.com/alexandriaproject-io/milvus-adapter-service/main/docker-compose.yml -O docker-compose.yml
+
+# run docker compose (to run detached add -d after the `run` command)
+docker compose up
+
+# Status swagger: http://127.0.0.1:5050/swagger
+# Rest API swagger: http://127.0.0.1:4040/swagger
+```
+
+`NOTE: milvus may take a while to start...` \
+`NOTE: Please shutdown milvus properly otherwise it can corrupt the data`
 
 ## Rest API Endpoints
 

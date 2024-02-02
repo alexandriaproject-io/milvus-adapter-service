@@ -86,7 +86,11 @@ def create_segments_collection(collection_name=config.VECTOR_SEGMENT_COLLECTION,
         f"Creating collection {collection_name} with vector_id_field,document_id_field,section_id_field,vector_field"
     )
     # Create and return new collection
-    collection = Collection(name=collection_name, schema=schema)
+    collection = Collection(
+        name=collection_name,
+        schema=schema,
+        num_partitions=config.MILVUS_NUM_PARTITIONS
+    )
 
     if config.INDEX_USE_IVF_FLAT:
         log.info(f"Creating IVF_FLAT index on vector_field('{VECTOR_FIELD_NAME}')")
