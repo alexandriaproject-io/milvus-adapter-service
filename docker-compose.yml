@@ -62,9 +62,6 @@ services:
       - "etcd"
       - "minio"
 
-
-
-
   adapter:
     container_name: milvus-adapter-srv
     image: niftylius/milvus-adapter:latest
