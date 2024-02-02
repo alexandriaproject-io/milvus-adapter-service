@@ -51,7 +51,7 @@ routes = [
 ]
 
 
-async def start_nats_client(stats, executions, nats_ready_event):
+async def start_nats_client(stats, executions, startup_queue):
     global shared_stats
     global execution_queue
     global nc
@@ -61,18 +61,23 @@ async def start_nats_client(stats, executions, nats_ready_event):
     nc = NATS()
 
     tls_context = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH)
-    await nc.connect(
-        config.NATS_URL,
-        user=config.NATS_USER,
-        password=config.NATS_PASS,
-        tls=tls_context if config.NATS_TLS else None,
-        allow_reconnect=False,
-    )
+    try:
+        await nc.connect(
+            config.NATS_URL,
+            user=config.NATS_USER,
+            password=config.NATS_PASS,
+            tls=tls_context if config.NATS_TLS else None,
+            allow_reconnect=False,
+        )
+    except Exception as e:
+        startup_queue.put({"success": False, "error": f"{e}"})
+        exit(0)
+
     atexit.register(cleanup)
     js = nc.jetstream()
 
     await subscribe_nats_routes(js, nc, routes, help_health, recreate_js=True)
-    nats_ready_event.set()
+    startup_queue.put({"success": True, "error": ''})
     await keep_alive(nc, shared_stats, execution_queue, check_milvus_health)
 
 

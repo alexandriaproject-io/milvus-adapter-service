@@ -13,7 +13,7 @@ from src.services.milvus_service.milvus_db import (
 )
 
 
-def start_milvus_service(stats, task_queue, startup_queue, shutdown, worker_id):
+def start_milvus_service(stats, task_queue, startup_queue, worker_id):
     global shared_stats
     global vectorizer
     shared_stats = stats

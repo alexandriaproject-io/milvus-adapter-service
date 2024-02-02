@@ -27,10 +27,9 @@ if __name__ == '__main__':
 
     for i in range(config.MILVUS_WORKERS):
         log.info(f"Starting Milvus worker #{i + 1}")
-        milvus_ready_event = threading.Event()
         milvus_thread = threading.Thread(
             target=milvus_service.start_milvus_service,
-            args=(shared_stats, execution_queue, startup_queue, shutdown_services, i,),
+            args=(shared_stats, execution_queue, startup_queue, i,),
             daemon=True
         )
         milvus_thread.start()
@@ -43,15 +42,18 @@ if __name__ == '__main__':
     if config.NATS_ENABLED:
         # Run the NATS client asynchronously
         log.info("Starting Nats client")
-        nats_ready_event = threading.Event()
+
         asyncio_thread = threading.Thread(
             target=asyncio.run,
-            args=(nats_client.start_nats_client(shared_stats, execution_queue, nats_ready_event),),
+            args=(nats_client.start_nats_client(shared_stats, execution_queue, startup_queue),),
             daemon=True
         )
         asyncio_thread.start()
         log.info("Waiting for nats to be ready")
-        nats_ready_event.wait()
+        thread_status = startup_queue.get()
+        if not thread_status.get("success", False):
+            log.error(thread_status.get("error", "Unknown error"))
+            exit(1)
 
     if config.API_SERVER_ENABLED:
         # Run the Rest API server asynchronously
