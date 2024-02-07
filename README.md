@@ -38,7 +38,7 @@ Milvus Adapter Service architecture:
 
 ## Milvus Adapter Service Architecture
 
-![Alt text](svgs/Milvus Adapter.drawio.svg)
+![Alt text](svgs/milvus_adapter.drawio.svg)
 
 The Milvus Adapter service orchestrates operations involving data handling and text processing.
 It interfaces with a NATS Client to process search, addition, and deletion requests via respective controllers.
