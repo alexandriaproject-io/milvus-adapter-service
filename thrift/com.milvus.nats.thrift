@@ -47,4 +47,3 @@ struct L2SegmentDeleteResponse {
     3: bool is_error                // Is error or not
     4: optional string error_text   // Error message text
 }
-
