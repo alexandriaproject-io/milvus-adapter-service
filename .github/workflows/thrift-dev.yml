@@ -1,0 +1,24 @@
+name: update types dev
+
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - "thrift/**"
+
+jobs:
+  signal-types-update:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Trigger Dispatch Event
+        run: |
+          curl -X POST \
+               -H "Authorization: Bearer ${{ secrets.TYPES_DISPATCH_TOKEN }}" \
+               -H "Accept: application/vnd.github.v3+json" \
+               https://api.github.com/repos/alexandriaproject-io/alexandria-project-types/dispatches \
+               -d '{"event_type": "sync_types_dev", "client_payload": {"key": "value"}}'
+        shell: bash
